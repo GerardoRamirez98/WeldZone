@@ -9,14 +9,44 @@ export default function Header({
   return (
     <header
       className="sticky top-0 z-30 border-b bg-white/70 backdrop-blur
-                        border-zinc-200 dark:border-zinc-800 dark:bg-zinc-950/70"
+                 border-zinc-200 dark:border-zinc-800 dark:bg-zinc-950/70"
     >
       <div className="container flex items-center justify-between py-3">
+        {/* 🔥 Logo */}
         <div className="text-xl font-extrabold text-zinc-900 dark:text-white">
           Weld
           <span className="text-emerald-600 dark:text-emerald-400">Zone</span>
         </div>
 
+        {/* 🔗 Navegación */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+          <a
+            href="#home"
+            className="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400 transition-colors"
+          >
+            Inicio
+          </a>
+          <a
+            href="#products"
+            className="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400 transition-colors"
+          >
+            Productos
+          </a>
+          <a
+            href="#about"
+            className="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400 transition-colors"
+          >
+            About
+          </a>
+          <a
+            href="#contact"
+            className="text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400 transition-colors"
+          >
+            Contacto
+          </a>
+        </nav>
+
+        {/* 🔍 Buscador + Tema */}
         <div className="flex items-center gap-2">
           <div className="relative hidden sm:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -29,7 +59,6 @@ export default function Header({
                          dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           </div>
-
           <ThemeToggle />
         </div>
       </div>

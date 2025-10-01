@@ -28,6 +28,10 @@ body,
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Estilos base */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
