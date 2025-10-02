@@ -18,18 +18,22 @@ Construida con **Vite + React + TypeScript + Tailwind CSS v4 + Radix UI + Zustan
 
 ## 📂 Estructura del proyecto
 
+## 📂 Estructura del proyecto
+
+```bash
 weldzone/
-├── public/ # Archivos estáticos
+├── public/               # Archivos estáticos
 ├── src/
-│ ├── components/ # Componentes reutilizables (Header, ProductoCard, etc.)
-│ ├── pages/ # Páginas principales (Catálogo, Admin, About)
-│ ├── data/ # Datos iniciales (ej. productos)
-│ ├── App.tsx # Enrutamiento principal
-│ └── main.tsx # Punto de entrada
+│   ├── components/       # Componentes reutilizables (Header, ProductoCard, etc.)
+│   ├── pages/            # Páginas principales (Catálogo, Admin, About)
+│   ├── data/             # Datos iniciales (ej. productos)
+│   ├── App.tsx           # Enrutamiento principal
+│   └── main.tsx          # Punto de entrada
 ├── index.html
 ├── package.json
 ├── tailwind.config.ts
 └── vite.config.ts
+```
 
 yaml
 Copiar código
