@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
 import About from "./pages/About";
@@ -6,16 +6,14 @@ import About from "./pages/About";
 export default function App() {
   return (
     <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <Router>
-        {/* Header fijo */}
-        <Header onSearch={() => {}} />
+      {/* Header fijo en todas las páginas */}
+      <Header onSearch={() => {}} />
 
-        {/* Rutas */}
-        <Routes>
-          <Route path="/" element={<Catalogo />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
-      </Router>
+      {/* Rutas */}
+      <Routes>
+        <Route path="/" element={<Catalogo />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
     </div>
   );
 }

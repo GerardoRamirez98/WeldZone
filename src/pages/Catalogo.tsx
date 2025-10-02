@@ -25,6 +25,7 @@ export default function Catalogo() {
             Productos para soldadura — {filtered.length} resultado(s)
           </p>
         </div>
+
         {/* Buscador móvil */}
         <input
           onChange={(e) => setQ(e.target.value)}

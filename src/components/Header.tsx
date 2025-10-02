@@ -2,6 +2,8 @@ import { Search, Menu, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { Link, useLocation } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
+import logoDark from "../assets/logo-dark.png";
+import logoLight from "../assets/logo-light.png";
 
 export default function Header({
   onSearch,
@@ -10,7 +12,7 @@ export default function Header({
 }) {
   const location = useLocation();
 
-  const navLinks = [
+  const links = [
     { to: "/", label: "Catálogo" },
     { to: "/about", label: "About" },
   ];
@@ -21,32 +23,41 @@ export default function Header({
                  border-zinc-200 dark:border-zinc-800 dark:bg-zinc-950/70"
     >
       <div className="container flex items-center justify-between py-3">
-        {/* Logo */}
-        <div className="text-xl font-extrabold text-zinc-900 dark:text-white">
-          <Link to="/">
-            Weld
-            <span className="text-emerald-600 dark:text-emerald-400">Zone</span>
-          </Link>
-        </div>
+        {/* Logo dinámico */}
+        <Link to="/" className="flex items-center gap-2">
+          <img
+            src={logoDark}
+            alt="WeldZone Logo"
+            className="h-12 w-auto object-contain dark:hidden"
+          />
+          <img
+            src={logoLight}
+            alt="WeldZone Logo"
+            className="h-12 w-auto object-contain hidden dark:block"
+          />
+        </Link>
 
-        {/* Navegación en escritorio */}
+        {/* Navegación desktop */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {navLinks.map(({ to, label }) => (
+          {links.map(({ to, label }) => (
             <Link
               key={to}
               to={to}
-              className={`transition-colors ${
+              className={`relative transition-colors ${
                 location.pathname === to
                   ? "text-emerald-600 dark:text-emerald-400 font-semibold"
                   : "hover:text-emerald-600"
               }`}
             >
               {label}
+              {location.pathname === to && (
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full"></span>
+              )}
             </Link>
           ))}
         </nav>
 
-        {/* Buscador y toggle en escritorio */}
+        {/* Buscador + ThemeToggle desktop */}
         <div className="hidden md:flex items-center gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -67,41 +78,39 @@ export default function Header({
           <ThemeToggle />
           <Dialog.Root>
             <Dialog.Trigger asChild>
-              <button
-                className="p-2 rounded-md 
-                   bg-zinc-900 text-white 
-                   hover:bg-zinc-800
-                   transition-colors"
-              >
-                <Menu className="h-6 w-6 text-white" />
+              <button className="p-2.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors">
+                <Menu className="h-5 w-5" />
               </button>
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
               <Dialog.Content
                 className="fixed top-0 right-0 h-full w-64 bg-white dark:bg-zinc-950 shadow-lg z-50
-                   flex flex-col p-6"
+                           flex flex-col p-6 animate-in slide-in-from-right duration-300"
               >
-                {/* Header menú */}
+                {/* Accesibilidad */}
+                <Dialog.Title className="sr-only">
+                  Menú de navegación
+                </Dialog.Title>
+                <Dialog.Description className="sr-only">
+                  Selecciona una sección para navegar en WeldZone.
+                </Dialog.Description>
+
+                {/* Header del menú visible */}
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-lg font-bold text-zinc-900 dark:text-white">
                     Menú
                   </span>
                   <Dialog.Close asChild>
-                    <button
-                      className="p-2 rounded-md 
-                         bg-zinc-900 text-white 
-                         hover:bg-zinc-800
-                         transition-colors"
-                    >
-                      <X className="h-5 w-5 text-white" />
+                    <button className="p-2 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors">
+                      <X className="h-5 w-5" />
                     </button>
                   </Dialog.Close>
                 </div>
 
-                {/* Links */}
+                {/* Links móviles */}
                 <nav className="flex flex-col gap-4 text-base">
-                  {navLinks.map(({ to, label }) => (
+                  {links.map(({ to, label }) => (
                     <Link
                       key={to}
                       to={to}
