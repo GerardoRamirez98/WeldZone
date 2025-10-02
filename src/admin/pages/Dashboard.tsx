@@ -1,16 +1,25 @@
-import { products } from "../../data/products";
+import { useState } from "react";
+import {
+  products as initialProducts,
+  type Producto,
+} from "../../data/products";
 import {
   Package,
   TrendingDown,
   TrendingUp,
   AlertTriangle,
   Pencil,
-  Plus,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import RestockModal from "../components/RestockModal";
 
 export default function Dashboard() {
+  const [products, setProducts] = useState<Producto[]>(initialProducts);
+  const [productoRestock, setProductoRestock] = useState<Producto | null>(null);
+
+  // 👇 Nuevo estado: stock mínimo definido por el admin
+  const [minStock, setMinStock] = useState<number>(5);
+
   const totalProductos = products.length;
   const activos = products.filter((p) => p.estado === "Activo").length;
   const descontinuados = products.filter(
@@ -19,7 +28,7 @@ export default function Dashboard() {
 
   const stockTotal = products.reduce((acc, p) => acc + p.stock, 0);
   const porAgotarse = products.filter(
-    (p) => p.stock > 0 && p.stock <= 5
+    (p) => p.stock > 0 && p.stock <= minStock
   ).length;
   const sinExistencias = products.filter((p) => p.stock === 0).length;
 
@@ -39,14 +48,38 @@ export default function Dashboard() {
     })
   );
 
-  // Top 3 productos con menor stock
-  const lowStock = [...products].sort((a, b) => a.stock - b.stock).slice(0, 3);
+  // Filtrar solo productos con bajo stock según minStock
+  const lowStock = products
+    .filter((p) => p.stock <= minStock)
+    .sort((a, b) => a.stock - b.stock);
 
   const COLORS = ["#facc15", "#3b82f6", "#22c55e", "#ef4444", "#a855f7"];
+
+  // 🔄 función que actualiza el stock y cierra modal
+  const handleRestock = (id: number, nuevoStock: number) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p))
+    );
+    setProductoRestock(null); // 👈 cerramos modal al guardar
+  };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Panel de Control</h2>
+
+      {/* Configuración de stock mínimo */}
+      <div className="mb-6 flex items-center gap-4">
+        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Stock mínimo:
+        </label>
+        <input
+          type="number"
+          value={minStock}
+          min={1}
+          onChange={(e) => setMinStock(Number(e.target.value))}
+          className="w-24 p-2 border rounded-md border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-center text-sm"
+        />
+      </div>
 
       {/* Métricas */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
@@ -72,7 +105,7 @@ export default function Dashboard() {
         />
         <Card
           icon={<AlertTriangle className="w-8 h-8 text-orange-500" />}
-          label="Por agotarse"
+          label={`Por debajo de ${minStock}`}
           value={porAgotarse}
         />
         <Card
@@ -96,7 +129,7 @@ export default function Dashboard() {
                 cx="50%"
                 cy="50%"
                 outerRadius={80}
-                innerRadius={40} // donut minimalista
+                innerRadius={40}
                 label={({ name, value }) => `${name} (${value})`}
               >
                 {chartData.map((_, index) => (
@@ -116,47 +149,55 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold mb-4">
             Productos con bajo stock
           </h3>
-          <ul className="space-y-2">
-            {lowStock.map((p) => (
-              <li
-                key={p.id}
-                className="flex justify-between items-center p-2 rounded-md border border-zinc-200 dark:border-zinc-700"
-              >
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{p.nombre}</span>
-                  <span
-                    className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${
-                      p.stock === 0
-                        ? "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-200"
-                        : p.stock <= 5
-                        ? "bg-orange-100 text-orange-700 dark:bg-orange-800 dark:text-orange-200"
-                        : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                    }`}
-                  >
-                    {p.stock === 0 ? "Sin stock" : `${p.stock} en stock`}
-                  </span>
-                </div>
 
-                {/* Acciones */}
-                <div className="flex gap-2">
-                  <Link
-                    to={`/admin/products`}
-                    className="p-1 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white"
+          {lowStock.length > 0 ? (
+            <ul className="space-y-2">
+              {lowStock.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex justify-between items-center p-2 rounded-md border border-zinc-200 dark:border-zinc-700"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{p.nombre}</span>
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${
+                        p.stock === 0
+                          ? "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-200"
+                          : "bg-orange-100 text-orange-700 dark:bg-orange-800 dark:text-orange-200"
+                      }`}
+                    >
+                      {p.stock === 0 ? "Sin stock" : `${p.stock} en stock`}
+                    </span>
+                  </div>
+
+                  {/* Acción: Reabastecer */}
+                  <button
+                    className="flex items-center gap-1 px-3 py-1 rounded bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold"
+                    onClick={() => setProductoRestock(p)}
                   >
                     <Pencil className="w-4 h-4" />
-                  </Link>
-                  <button
-                    className="p-1 rounded-full bg-green-500 hover:bg-green-600 text-white"
-                    onClick={() => alert(`Reabastecer ${p.nombre}`)} // en futuro → abrir modal
-                  >
-                    <Plus className="w-4 h-4" />
+                    Reabastecer
                   </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              ✅ No hay productos por debajo del stock mínimo ({minStock}).
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Modal de Reabastecer */}
+      {productoRestock && (
+        <RestockModal
+          isOpen={!!productoRestock}
+          onClose={() => setProductoRestock(null)}
+          producto={productoRestock}
+          onRestock={handleRestock}
+        />
+      )}
     </div>
   );
 }

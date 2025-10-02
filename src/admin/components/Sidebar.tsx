@@ -1,6 +1,6 @@
 // src/admin/components/Sidebar.tsx
 import { Link, useLocation } from "react-router-dom";
-import { Package, LayoutDashboard } from "lucide-react";
+import { Package, LayoutDashboard, Settings } from "lucide-react"; // 👈 Agregamos Settings
 import logoLight from "../../assets/logo-light.png";
 import logoDark from "../../assets/logo-dark.png";
 import { useEffect, useState } from "react";
@@ -29,6 +29,11 @@ export function Sidebar({
   const links = [
     { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
     { to: "/admin/products", label: "Productos", icon: <Package size={18} /> },
+    {
+      to: "/admin/config",
+      label: "Configuración",
+      icon: <Settings size={18} />,
+    }, // 👈 Nuevo link
   ];
 
   return (
@@ -54,12 +59,12 @@ export function Sidebar({
             key={to}
             to={to}
             onClick={onClose}
-            className={`flex items-center gap-3 p-2 rounded-lg transition 
-              ${
-                location.pathname === to
-                  ? "bg-yellow-500 text-white"
-                  : "hover:bg-zinc-200 dark:hover:bg-zinc-700"
-              }`}
+            className={`flex items-center gap-3 p-2 rounded-lg font-medium transition no-underline
+    ${
+      location.pathname === to
+        ? "bg-yellow-500 text-black shadow-sm"
+        : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-black dark:hover:text-white"
+    }`}
           >
             {icon} {label}
           </Link>

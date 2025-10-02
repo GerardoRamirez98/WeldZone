@@ -7,6 +7,7 @@ import About from "./pages/About";
 import AdminLayout from "./admin/AdminLayout";
 import Dashboard from "./admin/pages/Dashboard";
 import Products from "./admin/pages/Products";
+import AdminConfig from "./admin/pages/AdminConfig"; // 👈 importar la nueva página
 
 export default function App() {
   return (
@@ -36,6 +37,8 @@ export default function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="products" element={<Products />} />
+          <Route path="config" element={<AdminConfig />} />{" "}
+          {/* 👈 nueva ruta */}
         </Route>
       </Routes>
     </div>

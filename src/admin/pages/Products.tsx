@@ -5,19 +5,30 @@ import {
 } from "../../data/products";
 import AdminImage from "../components/AdminImage";
 import AddProductModal from "../components/AddProductModal";
+import EditProductModal from "../components/EditProductModal"; // 🔥 lo vamos a crear
+import { Dialog } from "@headlessui/react";
 
 export default function Products() {
   const [products, setProducts] = useState<Producto[]>(initialProducts);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [productoEdit, setProductoEdit] = useState<Producto | null>(null);
+  const [productoDelete, setProductoDelete] = useState<Producto | null>(null);
 
+  // Agregar
   const handleAddProduct = (nuevoProducto: Producto) => {
     setProducts([...products, nuevoProducto]);
   };
 
+  // Editar
+  const handleUpdateProduct = (actualizado: Producto) => {
+    setProducts(
+      products.map((p) => (p.id === actualizado.id ? actualizado : p))
+    );
+  };
+
+  // Eliminar
   const handleDeleteProduct = (id: number) => {
-    if (confirm("¿Seguro que quieres eliminar este producto?")) {
-      setProducts(products.filter((p) => p.id !== id));
-    }
+    setProducts(products.filter((p) => p.id !== id));
   };
 
   return (
@@ -27,7 +38,7 @@ export default function Products() {
         <h2 className="text-2xl font-bold">Gestión de Productos</h2>
         <button
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setIsAddModalOpen(true)}
         >
           + Agregar
         </button>
@@ -100,11 +111,14 @@ export default function Products() {
 
             {/* Acciones */}
             <div className="flex gap-2 mt-auto pt-4">
-              <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition w-full">
+              <button
+                className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition w-full"
+                onClick={() => setProductoEdit(p)}
+              >
                 Editar
               </button>
               <button
-                onClick={() => handleDeleteProduct(p.id)}
+                onClick={() => setProductoDelete(p)}
                 className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition w-full"
               >
                 Eliminar
@@ -116,10 +130,58 @@ export default function Products() {
 
       {/* Modal para agregar producto */}
       <AddProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddProduct}
       />
+
+      {/* Modal para editar producto */}
+      {productoEdit && (
+        <EditProductModal
+          isOpen={!!productoEdit}
+          onClose={() => setProductoEdit(null)}
+          producto={productoEdit}
+          onUpdate={handleUpdateProduct}
+          onDelete={(id) => {
+            handleDeleteProduct(id);
+            setProductoEdit(null);
+          }}
+        />
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      <Dialog
+        open={!!productoDelete}
+        onClose={() => setProductoDelete(null)}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10 border border-zinc-200 dark:border-zinc-700">
+          <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-800 dark:text-zinc-100">
+            ¿Eliminar producto?
+          </Dialog.Title>
+          <p className="text-center text-sm text-zinc-600 dark:text-zinc-300 mb-6">
+            Esta acción no se puede deshacer.
+          </p>
+          <div className="flex justify-center gap-3">
+            <button
+              className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 transition text-sm"
+              onClick={() => setProductoDelete(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm font-semibold"
+              onClick={() => {
+                if (productoDelete) handleDeleteProduct(productoDelete.id);
+                setProductoDelete(null);
+              }}
+            >
+              Sí, eliminar
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

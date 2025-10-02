@@ -1,20 +1,25 @@
+// src/admin/components/EditProductModal.tsx
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import type { Producto } from "../../data/products";
 import { Camera } from "lucide-react";
-import { categorias, etiquetas } from "../../data/options"; // ✅ opciones dinámicas
+import { categorias, etiquetas } from "../../data/options"; // ✅ importamos opciones
 
-interface AddProductModalProps {
+interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (producto: Producto) => void;
+  producto: Producto | null;
+  onUpdate: (producto: Producto) => void;
+  onDelete: (id: number) => void;
 }
 
-export default function AddProductModal({
+export default function EditProductModal({
   isOpen,
   onClose,
-  onAdd,
-}: AddProductModalProps) {
+  producto,
+  onUpdate,
+  onDelete,
+}: EditProductModalProps) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState<number>(0);
@@ -23,23 +28,22 @@ export default function AddProductModal({
   const [etiqueta, setEtiqueta] = useState<"Nuevo" | "Oferta" | undefined>();
   const [imagen, setImagen] = useState<string>("");
 
-  // Estados para confirmaciones
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  // Estados de confirmación
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-
-  const resetForm = () => {
-    setNombre("");
-    setDescripcion("");
-    setPrecio(0);
-    setStock(0);
-    setCategoria("General");
-    setEtiqueta(undefined);
-    setImagen("");
-  };
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    if (isOpen) resetForm();
-  }, [isOpen]);
+    if (producto) {
+      setNombre(producto.nombre);
+      setDescripcion(producto.descripcion);
+      setPrecio(producto.precio);
+      setStock(producto.stock);
+      setCategoria(producto.categoria);
+      setEtiqueta(producto.etiqueta);
+      setImagen(producto.imagen);
+    }
+  }, [producto]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -54,23 +58,19 @@ export default function AddProductModal({
     }
   };
 
-  const handleSubmit = () => {
-    if (!nombre) return alert("El nombre es obligatorio");
-
-    const nuevoProducto: Producto = {
-      id: Date.now(),
+  const handleUpdate = () => {
+    if (!producto) return;
+    const actualizado: Producto = {
+      ...producto,
       nombre,
-      descripcion: descripcion || "Sin descripción",
+      descripcion,
       precio,
       stock,
-      estado: "Activo",
-      imagen,
       categoria,
       etiqueta,
+      imagen,
     };
-
-    onAdd(nuevoProducto);
-    resetForm();
+    onUpdate(actualizado);
     onClose();
   };
 
@@ -81,13 +81,10 @@ export default function AddProductModal({
         onClose={() => setShowCancelConfirm(true)}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm"
-          aria-hidden="true"
-        />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-lg relative z-10 border border-zinc-200 dark:border-zinc-700">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-lg relative z-10">
           <Dialog.Title className="text-lg font-bold text-center mb-4 pb-2 border-b border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
-            Agregar producto
+            Editar producto
           </Dialog.Title>
 
           {/* Formulario */}
@@ -104,18 +101,16 @@ export default function AddProductModal({
                 />
                 <label className="label-base">Nombre</label>
               </div>
-
               <div className="relative">
                 <textarea
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
                   className="input-base peer"
-                  placeholder=" "
                   rows={2}
+                  placeholder=" "
                 />
                 <label className="label-base">Descripción</label>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
                   <input
@@ -138,7 +133,6 @@ export default function AddProductModal({
                   <label className="label-base">Stock</label>
                 </div>
               </div>
-
               <div className="relative">
                 <select
                   value={categoria}
@@ -153,7 +147,6 @@ export default function AddProductModal({
                 </select>
                 <label className="label-base">Categoría</label>
               </div>
-
               <div className="relative">
                 <select
                   value={etiqueta || ""}
@@ -187,7 +180,7 @@ export default function AddProductModal({
                 className="w-full text-sm text-zinc-900 dark:text-zinc-100"
               />
               {imagen ? (
-                <div className="mt-4 flex items-center justify-center">
+                <div className="mt-4">
                   <img
                     src={imagen}
                     alt="Preview"
@@ -203,24 +196,32 @@ export default function AddProductModal({
           </div>
 
           {/* Botones */}
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-between items-center gap-2 mt-6">
             <button
-              className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 transition text-sm"
-              onClick={() => setShowCancelConfirm(true)}
+              className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm"
+              onClick={() => setShowDeleteConfirm(true)}
             >
-              Cancelar
+              Eliminar
             </button>
-            <button
-              className="px-4 py-2 rounded-lg bg-yellow-500 text-black hover:bg-yellow-600 transition font-semibold text-sm"
-              onClick={() => setShowSaveConfirm(true)}
-            >
-              Guardar
-            </button>
+            <div className="flex gap-2 ml-auto">
+              <button
+                className="px-4 py-2 rounded-lg bg-zinc-700 text-white"
+                onClick={() => setShowCancelConfirm(true)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-yellow-500 text-black font-semibold"
+                onClick={() => setShowSaveConfirm(true)}
+              >
+                Guardar cambios
+              </button>
+            </div>
           </div>
         </div>
       </Dialog>
 
-      {/* Confirmación de Cancelar */}
+      {/* Confirmación cancelar */}
       <Dialog
         open={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
@@ -228,10 +229,12 @@ export default function AddProductModal({
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4">
-            ¿Cancelar?
+          <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-zinc-100">
+            ¿Cancelar edición?
           </Dialog.Title>
-          <p className="text-center text-sm mb-6">La información se perderá.</p>
+          <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+            Los cambios no guardados se perderán.
+          </p>
           <div className="flex justify-center gap-3">
             <button
               className="px-4 py-2 bg-zinc-700 text-white rounded-lg"
@@ -242,7 +245,6 @@ export default function AddProductModal({
             <button
               className="px-4 py-2 bg-red-500 text-white rounded-lg"
               onClick={() => {
-                resetForm();
                 setShowCancelConfirm(false);
                 onClose();
               }}
@@ -253,7 +255,7 @@ export default function AddProductModal({
         </div>
       </Dialog>
 
-      {/* Confirmación de Guardar */}
+      {/* Confirmación guardar */}
       <Dialog
         open={showSaveConfirm}
         onClose={() => setShowSaveConfirm(false)}
@@ -261,11 +263,11 @@ export default function AddProductModal({
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4">
-            ¿Guardar producto?
+          <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-zinc-100">
+            ¿Guardar cambios?
           </Dialog.Title>
-          <p className="text-center text-sm mb-6">
-            Se agregará un nuevo producto a la lista.
+          <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+            Se sobrescribirá la información de este producto.
           </p>
           <div className="flex justify-center gap-3">
             <button
@@ -277,11 +279,50 @@ export default function AddProductModal({
             <button
               className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold"
               onClick={() => {
-                handleSubmit();
+                handleUpdate();
                 setShowSaveConfirm(false);
               }}
             >
               Sí, guardar
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Confirmación eliminar */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600">
+            ¿Eliminar producto?
+          </Dialog.Title>
+          <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+            Estás a punto de eliminar{" "}
+            <span className="font-semibold text-red-500">
+              {producto?.nombre}
+            </span>
+            . Esta acción no se puede deshacer.
+          </p>
+          <div className="flex justify-center gap-3">
+            <button
+              className="px-4 py-2 bg-zinc-700 text-white rounded-lg"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold"
+              onClick={() => {
+                if (producto) onDelete(producto.id);
+                setShowDeleteConfirm(false);
+                onClose();
+              }}
+            >
+              Sí, eliminar
             </button>
           </div>
         </div>
