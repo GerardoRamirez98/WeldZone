@@ -6,6 +6,9 @@ export interface Producto {
   precio: number;
   imagen: string;
   etiqueta?: "Nuevo" | "Oferta";
+  stock: number;
+  estado: "Activo" | "Descontinuado";
+  categoria: string;
 }
 
 // ✅ Importamos imágenes correctamente (esto es lo más recomendable con Vite)
@@ -23,6 +26,9 @@ export const products: Producto[] = [
     precio: 4599,
     imagen: soldadoraImg,
     etiqueta: "Oferta",
+    stock: 8,
+    estado: "Activo",
+    categoria: "Soldadoras",
   },
   {
     id: 2,
@@ -31,6 +37,9 @@ export const products: Producto[] = [
     precio: 899,
     imagen: caretaImg,
     etiqueta: "Nuevo",
+    stock: 2,
+    estado: "Activo",
+    categoria: "Careta",
   },
   {
     id: 3,
@@ -38,6 +47,9 @@ export const products: Producto[] = [
     descripcion: "Cuero premium, alta resistencia térmica y gran durabilidad.",
     precio: 299,
     imagen: guantesImg,
+    stock: 6,
+    estado: "Activo",
+    categoria: "Guantes",
   },
   {
     id: 4,
@@ -45,5 +57,8 @@ export const products: Producto[] = [
     descripcion: "Arco estable y fácil encendido. Uso general.",
     precio: 199,
     imagen: electrodosImg,
+    stock: 0,
+    estado: "Descontinuado",
+    categoria: "Consumibles",
   },
 ];
