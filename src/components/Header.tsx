@@ -24,7 +24,10 @@ export default function Header({
     >
       <div className="container flex items-center justify-between py-3">
         {/* Logo dinámico */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link
+          to="/"
+          className="flex items-center gap-2 hover:scale-105 transition-transform"
+        >
           <img
             src={logoDark}
             alt="WeldZone Logo"
@@ -37,24 +40,31 @@ export default function Header({
           />
         </Link>
 
-        {/* Navegación desktop */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {links.map(({ to, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`relative transition-colors ${
-                location.pathname === to
-                  ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                  : "hover:text-emerald-600"
-              }`}
-            >
-              {label}
-              {location.pathname === to && (
-                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full"></span>
-              )}
-            </Link>
-          ))}
+        {/* Navegación desktop (línea amarilla animada) */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+          {links.map(({ to, label }) => {
+            const active = location.pathname === to;
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`relative group px-2 py-1 transition-colors duration-300
+                  ${
+                    active
+                      ? "text-yellow-500 dark:text-yellow-400 font-semibold"
+                      : "text-zinc-700 dark:text-zinc-300 hover:text-yellow-500 dark:hover:text-yellow-400"
+                  }`}
+              >
+                {label}
+                {/* Línea animada */}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 w-full scale-x-0 transform bg-yellow-500 dark:bg-yellow-400 transition-transform duration-300 ${
+                    active ? "scale-x-100" : "group-hover:scale-x-100"
+                  }`}
+                />
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Buscador + ThemeToggle desktop */}
@@ -66,7 +76,7 @@ export default function Header({
               placeholder="Buscar productos…"
               className="w-72 rounded-xl border bg-white pl-9 pr-3 py-2 text-sm outline-none
                          border-zinc-300 text-zinc-900 placeholder:text-zinc-500
-                         focus:border-emerald-600
+                         focus:border-yellow-500 dark:focus:border-yellow-400
                          dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
           </div>
@@ -88,14 +98,6 @@ export default function Header({
                 className="fixed top-0 right-0 h-full w-64 bg-white dark:bg-zinc-950 shadow-lg z-50
                            flex flex-col p-6 animate-in slide-in-from-right duration-300"
               >
-                {/* Accesibilidad */}
-                <Dialog.Title className="sr-only">
-                  Menú de navegación
-                </Dialog.Title>
-                <Dialog.Description className="sr-only">
-                  Selecciona una sección para navegar en WeldZone.
-                </Dialog.Description>
-
                 {/* Header del menú visible */}
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-lg font-bold text-zinc-900 dark:text-white">
@@ -108,21 +110,30 @@ export default function Header({
                   </Dialog.Close>
                 </div>
 
-                {/* Links móviles */}
+                {/* Navegación móviles (línea amarilla animada) */}
                 <nav className="flex flex-col gap-4 text-base">
-                  {links.map(({ to, label }) => (
-                    <Link
-                      key={to}
-                      to={to}
-                      className={`transition-colors ${
-                        location.pathname === to
-                          ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                          : "hover:text-emerald-600"
-                      }`}
-                    >
-                      {label}
-                    </Link>
-                  ))}
+                  {links.map(({ to, label }) => {
+                    const active = location.pathname === to;
+                    return (
+                      <Link
+                        key={to}
+                        to={to}
+                        className={`relative group px-2 py-1 transition-colors duration-300
+          ${
+            active
+              ? "text-yellow-500 dark:text-yellow-400 font-semibold"
+              : "text-zinc-700 dark:text-zinc-300 hover:text-yellow-500 dark:hover:text-yellow-400"
+          }`}
+                      >
+                        {label}
+                        <span
+                          className={`absolute -bottom-1 left-0 h-0.5 w-full scale-x-0 transform bg-yellow-500 dark:bg-yellow-400 transition-transform duration-300 ${
+                            active ? "scale-x-100" : "group-hover:scale-x-100"
+                          }`}
+                        />
+                      </Link>
+                    );
+                  })}
                 </nav>
 
                 {/* Buscador móvil */}
@@ -133,7 +144,7 @@ export default function Header({
                     placeholder="Buscar productos…"
                     className="w-full rounded-xl border bg-white pl-9 pr-3 py-2 text-sm outline-none
                                border-zinc-300 text-zinc-900 placeholder:text-zinc-500
-                               focus:border-emerald-600
+                               focus:border-yellow-500 dark:focus:border-yellow-400
                                dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                   />
                 </div>
