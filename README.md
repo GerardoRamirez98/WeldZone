@@ -59,16 +59,8 @@ Previsualiza el build:
 bash
 Copiar código
 npm run preview
-🔮 Roadmap
- Configuración inicial con Vite + React + Tailwind.
 
- Catálogo de productos (grid responsivo).
-
- Panel de administración con CRUD de productos.
-
- Persistencia con base de datos / API.
-
- Despliegue en producción (Vercel / Netlify).
+```
 
 📸 Screenshots
 (Próximamente agregaremos capturas del catálogo y panel de administración)
