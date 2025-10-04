@@ -1,15 +1,9 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { ShoppingCart, Info, Tag } from "lucide-react";
-import type { Producto } from "../data/products";
+import type { Product } from "../types/products";
 
-/**
- * 💡 Componente que representa una tarjeta de producto.
- * - Muestra imagen, nombre, precio y etiqueta (Nuevo/Oferta)
- * - Incluye botón de detalles (modal) y botón de carrito
- * - Soporta tema claro/oscuro
- */
-export default function ProductCard({ product }: { product: Producto }) {
+export default function ProductCard({ product }: { product: Product }) {
   return (
     <div
       className="
@@ -38,14 +32,20 @@ export default function ProductCard({ product }: { product: Producto }) {
 
       {/* 🖼️ IMAGEN DEL PRODUCTO */}
       <div className="aspect-square overflow-hidden rounded-xl">
-        <img
-          src={product.imagen}
-          alt={product.nombre}
-          className="
-            h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]
-          "
-          loading="lazy"
-        />
+        {product.imagenUrl ? (
+          <img
+            src={product.imagenUrl}
+            alt={product.nombre}
+            className="
+              h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]
+            "
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-zinc-500 text-sm rounded-xl">
+            Sin imagen
+          </div>
+        )}
       </div>
 
       {/* 📝 INFO DEL PRODUCTO */}
@@ -72,7 +72,6 @@ export default function ProductCard({ product }: { product: Producto }) {
               <Info className="h-4 w-4" />
             </Dialog.Trigger>
 
-            {/* 📦 MODAL DE DETALLES */}
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black/60" />
               <Dialog.Content
@@ -87,14 +86,13 @@ export default function ProductCard({ product }: { product: Producto }) {
                 </Dialog.Title>
 
                 <div className="mt-3">
-                  <img
-                    src={product.imagen}
-                    alt={product.nombre}
-                    className="
-    w-full max-h-[400px] object-contain rounded-lg bg-white p-2 
-    dark:bg-zinc-800 transition-all
-  "
-                  />
+                  {product.imagenUrl && (
+                    <img
+                      src={product.imagenUrl}
+                      alt={product.nombre}
+                      className="w-full max-h-[400px] object-contain rounded-lg bg-white p-2 dark:bg-zinc-800 transition-all"
+                    />
+                  )}
                   <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300">
                     {product.descripcion}
                   </p>
@@ -103,21 +101,20 @@ export default function ProductCard({ product }: { product: Producto }) {
                   </p>
                 </div>
 
-                {/* 📤 BOTONES EN MODAL */}
                 <div className="mt-5 flex justify-end gap-2">
                   <Dialog.Close
                     className="
-      rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium 
-      text-white hover:bg-emerald-700 transition
-    "
+                      rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium 
+                      text-white hover:bg-emerald-700 transition
+                    "
                   >
                     Cerrar
                   </Dialog.Close>
                   <button
                     className="
-      rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium 
-      text-white hover:bg-emerald-700 transition
-    "
+                      rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium 
+                      text-white hover:bg-emerald-700 transition
+                    "
                   >
                     Cotizar
                   </button>
@@ -126,7 +123,7 @@ export default function ProductCard({ product }: { product: Producto }) {
             </Dialog.Portal>
           </Dialog.Root>
 
-          {/* 🛒 BOTÓN CARRITO (IGUAL ESTILO) */}
+          {/* 🛒 BOTÓN CARRITO */}
           <Tooltip.Provider delayDuration={150}>
             <Tooltip.Root>
               <Tooltip.Trigger

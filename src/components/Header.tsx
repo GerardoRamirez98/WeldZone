@@ -95,22 +95,23 @@ export default function Header({
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
               <Dialog.Content
-                className="fixed top-0 right-0 h-full w-64 bg-white dark:bg-zinc-950 shadow-lg z-50
-                           flex flex-col p-6 animate-in slide-in-from-right duration-300"
+                className="fixed top-0 right-0 h-full w-64 
+             bg-zinc-50 dark:bg-zinc-950 
+             text-zinc-900 dark:text-zinc-100 
+             shadow-lg z-50 flex flex-col p-6 
+             animate-in slide-in-from-right duration-300"
               >
                 {/* Header del menú visible */}
                 <div className="flex justify-between items-center mb-6">
-                  <span className="text-lg font-bold text-zinc-900 dark:text-white">
-                    Menú
-                  </span>
+                  <span className="text-lg font-bold">Menú</span>
                   <Dialog.Close asChild>
-                    <button className="p-2 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors">
+                    <button className="p-2 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
                       <X className="h-5 w-5" />
                     </button>
                   </Dialog.Close>
                 </div>
 
-                {/* Navegación móviles (línea amarilla animada) */}
+                {/* Navegación móviles */}
                 <nav className="flex flex-col gap-4 text-base">
                   {links.map(({ to, label }) => {
                     const active = location.pathname === to;
@@ -118,12 +119,11 @@ export default function Header({
                       <Link
                         key={to}
                         to={to}
-                        className={`relative group px-2 py-1 transition-colors duration-300
-          ${
-            active
-              ? "text-yellow-500 dark:text-yellow-400 font-semibold"
-              : "text-zinc-700 dark:text-zinc-300 hover:text-yellow-500 dark:hover:text-yellow-400"
-          }`}
+                        className={`relative group px-2 py-1 transition-colors duration-300 ${
+                          active
+                            ? "text-yellow-500 dark:text-yellow-400 font-semibold"
+                            : "text-zinc-900 dark:text-zinc-100 hover:text-yellow-500 dark:hover:text-yellow-400"
+                        }`}
                       >
                         {label}
                         <span
@@ -142,10 +142,10 @@ export default function Header({
                   <input
                     onChange={(e) => onSearch(e.target.value)}
                     placeholder="Buscar productos…"
-                    className="w-full rounded-xl border bg-white pl-9 pr-3 py-2 text-sm outline-none
-                               border-zinc-300 text-zinc-900 placeholder:text-zinc-500
-                               focus:border-yellow-500 dark:focus:border-yellow-400
-                               dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    className="w-full rounded-xl border bg-white dark:bg-zinc-900 pl-9 pr-3 py-2 text-sm outline-none
+                 border-zinc-300 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 
+                 placeholder:text-zinc-500 dark:placeholder:text-zinc-500 
+                 focus:border-yellow-500 dark:focus:border-yellow-400"
                   />
                 </div>
               </Dialog.Content>

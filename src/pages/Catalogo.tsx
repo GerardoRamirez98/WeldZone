@@ -1,20 +1,39 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import ProductCard from "../components/ProductCard";
-import { products } from "../data/products";
-import type { Producto } from "../data/products";
+import { getProducts } from "../api/products";
+import type { Product } from "../types/products";
 
 export default function Catalogo() {
   const [q, setQ] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered: Producto[] = useMemo(() => {
+  // 🚀 Cargar productos desde backend al montar
+  useEffect(() => {
+    getProducts()
+      .then(setProducts)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // 🔎 Filtrar según búsqueda
+  const filtered: Product[] = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return products;
     return products.filter(
       (p) =>
         p.nombre.toLowerCase().includes(s) ||
-        p.descripcion.toLowerCase().includes(s)
+        (p.descripcion ?? "").toLowerCase().includes(s)
     );
-  }, [q]);
+  }, [q, products]);
+
+  if (loading) {
+    return (
+      <main className="container py-6 text-center">
+        <p>Cargando productos...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="container py-6">
