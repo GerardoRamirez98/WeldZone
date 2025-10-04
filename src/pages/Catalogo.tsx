@@ -1,22 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import ProductCard from "../components/ProductCard";
-import { getProducts } from "../api/products";
-import type { Product } from "../types/products";
+import { useProducts } from "@/hooks/useProducts";
+import type { Product } from "@/types/products";
 
 export default function Catalogo() {
   const [q, setQ] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading } = useProducts();
 
-  // 🚀 Cargar productos desde backend al montar
-  useEffect(() => {
-    getProducts()
-      .then(setProducts)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  // 🔎 Filtrar según búsqueda
+  // 🔎 Filtrar productos según búsqueda
   const filtered: Product[] = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return products;
@@ -45,7 +36,6 @@ export default function Catalogo() {
           </p>
         </div>
 
-        {/* Buscador móvil */}
         <input
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar productos…"
@@ -56,7 +46,6 @@ export default function Catalogo() {
         />
       </div>
 
-      {/* Grid responsivo */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.map((p) => (
           <ProductCard key={p.id} product={p} />
