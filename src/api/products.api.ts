@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 // 📥 Obtener todos los productos
 export async function getProducts(): Promise<Product[]> {
+  console.log("📡 Solicitando productos desde:", `${API_URL}/products`);
   const res = await fetch(`${API_URL}/products`);
   if (!res.ok) throw new Error("Error al obtener productos");
   return res.json();
