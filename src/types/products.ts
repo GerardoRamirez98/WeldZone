@@ -1,13 +1,11 @@
-// src/types/product.ts
 export interface Product {
-  id: number;
+  id?: number; // ✅ opcional si lo genera el backend
   nombre: string;
-  descripcion?: string | null;
+  descripcion: string;
   precio: number;
   stock: number;
   categoria: string;
-  etiqueta?: string | null;
-  imagenUrl?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  etiqueta?: "Nuevo" | "Oferta" | "Descontinuado";
+  imagenUrl?: string; // ✅ este es el nombre correcto que usas en el frontend
+  estado?: string; // ✅ si tu backend lo usa
 }

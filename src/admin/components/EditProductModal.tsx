@@ -1,15 +1,16 @@
 // src/admin/components/EditProductModal.tsx
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import type { Producto } from "../../data/products";
 import { Camera } from "lucide-react";
 import { categorias, etiquetas } from "../../data/options"; // ✅ importamos opciones
+
+import type { Product } from "../../types/products";
 
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  producto: Producto | null;
-  onUpdate: (producto: Producto) => void;
+  producto: Product | null; // ✅ ahora coincide con tu Products.tsx
+  onUpdate: (producto: Product) => void;
   onDelete: (id: number) => void;
 }
 
@@ -25,7 +26,9 @@ export default function EditProductModal({
   const [precio, setPrecio] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
   const [categoria, setCategoria] = useState("General");
-  const [etiqueta, setEtiqueta] = useState<"Nuevo" | "Oferta" | undefined>();
+  const [etiqueta, setEtiqueta] = useState<
+    "Nuevo" | "Oferta" | "Descontinuado" | undefined
+  >();
   const [imagen, setImagen] = useState<string>("");
 
   // Estados de confirmación
@@ -41,7 +44,7 @@ export default function EditProductModal({
       setStock(producto.stock);
       setCategoria(producto.categoria);
       setEtiqueta(producto.etiqueta);
-      setImagen(producto.imagen);
+      setImagen(producto.imagenUrl || ""); // Aseguramos que sea string
     }
   }, [producto]);
 
@@ -60,7 +63,7 @@ export default function EditProductModal({
 
   const handleUpdate = () => {
     if (!producto) return;
-    const actualizado: Producto = {
+    const actualizado: Product = {
       ...producto,
       nombre,
       descripcion,
@@ -68,7 +71,7 @@ export default function EditProductModal({
       stock,
       categoria,
       etiqueta,
-      imagen,
+      imagenUrl: imagen,
     };
     onUpdate(actualizado);
     onClose();
@@ -317,7 +320,10 @@ export default function EditProductModal({
             <button
               className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold"
               onClick={() => {
-                if (producto) onDelete(producto.id);
+                if (producto?.id !== undefined) {
+                  onDelete(producto.id);
+                }
+
                 setShowDeleteConfirm(false);
                 onClose();
               }}

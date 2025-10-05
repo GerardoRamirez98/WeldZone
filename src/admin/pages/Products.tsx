@@ -1,39 +1,44 @@
-import { useState } from "react";
-import {
-  products as initialProducts,
-  type Producto,
-} from "../../data/products";
+import { useState, useEffect } from "react";
 import AdminImage from "../components/AdminImage";
 import AddProductModal from "../components/AddProductModal";
-import EditProductModal from "../components/EditProductModal"; // 🔥 lo vamos a crear
+import EditProductModal from "../components/EditProductModal";
 import { Dialog } from "@headlessui/react";
+import type { Product } from "../../types/products";
+import { getProducts } from "../../api/products.api";
 
 export default function Products() {
-  const [products, setProducts] = useState<Producto[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [productoEdit, setProductoEdit] = useState<Producto | null>(null);
-  const [productoDelete, setProductoDelete] = useState<Producto | null>(null);
+  const [productoEdit, setProductoEdit] = useState<Product | null>(null);
+  const [productoDelete, setProductoDelete] = useState<Product | null>(null);
 
-  // Agregar
-  const handleAddProduct = (nuevoProducto: Producto) => {
-    setProducts([...products, nuevoProducto]);
+  // 🚀 Cargar productos desde el backend al montar
+  useEffect(() => {
+    getProducts()
+      .then(setProducts)
+      .catch((err) => console.error("❌ Error al cargar productos:", err));
+  }, []);
+
+  // ➕ Agregar producto
+  const handleAddProduct = (nuevoProducto: Product) => {
+    setProducts((prev) => [...prev, nuevoProducto]);
   };
 
-  // Editar
-  const handleUpdateProduct = (actualizado: Producto) => {
-    setProducts(
-      products.map((p) => (p.id === actualizado.id ? actualizado : p))
+  // ✏️ Editar producto
+  const handleUpdateProduct = (actualizado: Product) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === actualizado.id ? actualizado : p))
     );
   };
 
-  // Eliminar
+  // 🗑️ Eliminar producto
   const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter((p) => p.id !== id));
+    setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
     <div>
-      {/* Header con botón */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Gestión de Productos</h2>
         <button
@@ -44,7 +49,7 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Grid con cards */}
+      {/* Grid con productos */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-stretch">
         {products.map((p) => (
           <div
@@ -52,26 +57,18 @@ export default function Products() {
             className="bg-white dark:bg-zinc-800 shadow rounded-lg p-4 flex flex-col h-full"
           >
             {/* Imagen */}
-            <AdminImage src={p.imagen} alt={p.nombre} />
+            <AdminImage src={p.imagenUrl || ""} alt={p.nombre} />
 
-            {/* Píldoras */}
+            {/* Etiquetas */}
             <div className="flex gap-2 mt-3 flex-wrap">
-              {p.estado === "Activo" ? (
-                <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200 text-xs font-bold">
-                  Activo
-                </span>
-              ) : (
-                <span className="px-2 py-1 rounded-full bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200 text-xs font-bold">
-                  Descontinuado
-                </span>
-              )}
-
               {p.etiqueta && (
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-bold ${
                     p.etiqueta === "Nuevo"
                       ? "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
-                      : "bg-orange-100 text-orange-700 dark:bg-orange-800 dark:text-orange-200"
+                      : p.etiqueta === "Oferta"
+                      ? "bg-orange-100 text-orange-700 dark:bg-orange-800 dark:text-orange-200"
+                      : "bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
                   }`}
                 >
                   {p.etiqueta}
@@ -128,14 +125,14 @@ export default function Products() {
         ))}
       </div>
 
-      {/* Modal para agregar producto */}
+      {/* Modal Agregar */}
       <AddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddProduct}
       />
 
-      {/* Modal para editar producto */}
+      {/* Modal Editar */}
       {productoEdit && (
         <EditProductModal
           isOpen={!!productoEdit}
@@ -149,7 +146,7 @@ export default function Products() {
         />
       )}
 
-      {/* Modal de confirmación de eliminación */}
+      {/* Confirmación de eliminación */}
       <Dialog
         open={!!productoDelete}
         onClose={() => setProductoDelete(null)}
@@ -173,7 +170,9 @@ export default function Products() {
             <button
               className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm font-semibold"
               onClick={() => {
-                if (productoDelete) handleDeleteProduct(productoDelete.id);
+                if (productoDelete?.id !== undefined) {
+                  handleDeleteProduct(productoDelete.id);
+                }
                 setProductoDelete(null);
               }}
             >

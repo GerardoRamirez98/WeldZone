@@ -1,43 +1,38 @@
 import type { Product } from "../types/products";
 
-// ✅ URL base del backend (asegúrate que tu .env tenga VITE_API_URL=http://localhost:3000)
 const API_URL = import.meta.env.VITE_API_URL;
 
-// 📥 Obtener todos los productos
-export async function getProducts(): Promise<Product[]> {
+export async function fetchProducts(): Promise<Product[]> {
   const res = await fetch(`${API_URL}/products`);
-  if (!res.ok) throw new Error("Error al obtener productos");
+  if (!res.ok) throw new Error("Error al cargar productos");
   return res.json();
 }
 
-// 📤 Crear un nuevo producto
-export async function createProduct(product: Product) {
+export async function createProduct(
+  data: Omit<Product, "id">
+): Promise<Product> {
   const res = await fetch(`${API_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
+    body: JSON.stringify(data),
   });
-
   if (!res.ok) throw new Error("Error al crear producto");
-  return await res.json();
+  return res.json();
 }
 
-// ✏️ Actualizar un producto
 export async function updateProduct(
   id: number,
-  product: Partial<Product>
+  data: Partial<Product>
 ): Promise<Product> {
   const res = await fetch(`${API_URL}/products/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
+    body: JSON.stringify(data),
   });
-
   if (!res.ok) throw new Error("Error al actualizar producto");
   return res.json();
 }
 
-// 🗑️ Eliminar un producto
 export async function deleteProduct(id: number): Promise<void> {
   const res = await fetch(`${API_URL}/products/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Error al eliminar producto");
