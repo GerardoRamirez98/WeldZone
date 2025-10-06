@@ -24,14 +24,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* ✅ Alias temporal (deprecated pero funcional) */
+    /* ✅ Alias temporal */
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]
-    },
-
-    /* ✅ Silenciar advertencia hasta migrar a TS7 */
-    "ignoreDeprecations": "6.0"
+    }
   },
   "include": ["src"]
 }

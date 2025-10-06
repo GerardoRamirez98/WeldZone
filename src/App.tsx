@@ -3,6 +3,8 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
 import About from "./pages/About";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Admin imports
 import AdminLayout from "./admin/AdminLayout";
@@ -34,44 +36,53 @@ export default function App() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isCatalogo]);
+  }, [isCatalogo]); // ✅ dependencia agregada
 
-  // ⏱️ Mostrar loader en cada cambio de ruta
+  // ⏱️ Loader global
   useEffect(() => {
     setShowLoader(true);
-    const timeout = setTimeout(() => setShowLoader(false), 2000); // ⏱️ 2s
+    const timeout = setTimeout(() => setShowLoader(false), 2000);
     return () => clearTimeout(timeout);
-  }, [location.pathname]);
+  }, [location.pathname]); // ✅ ya estaba bien
 
-  // 🧭 Detectar cambio de página y activar animación del footer
+  // 🧭 Animación footer
   useEffect(() => {
     if (!isCatalogo && !isAdmin) {
       setPageChange(true);
       const timeout = setTimeout(() => setPageChange(false), 800);
       return () => clearTimeout(timeout);
     }
-  }, [location.pathname]);
+  }, [isCatalogo, isAdmin]); // ✅ agregadas ambas dependencias
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      {/* 🔄 Loader global debajo del header */}
+      {/* 🔄 Loader */}
       {showLoader && (
         <div className="fixed inset-x-0 top-[4rem] bottom-0 z-50">
           <Loader />
         </div>
       )}
 
-      {/* 🧠 Header solo en la parte pública */}
+      {/* 🧠 Header solo en páginas públicas */}
       {!isAdmin && <Header onSearch={() => {}} />}
 
-      {/* 📦 Contenido principal */}
+      {/* 📦 Rutas */}
       <main className="flex-1">
         <Routes>
+          {/* 🌐 Rutas públicas */}
           <Route path="/" element={<Catalogo />} />
           <Route path="/about" element={<About />} />
+          <Route path="/login" element={<Login />} />
 
-          {/* 🛠️ Panel Admin */}
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* 🛠️ Panel Admin protegido */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Products />} />
             <Route path="config" element={<AdminConfig />} />
@@ -79,7 +90,7 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* 📦 Footer animado */}
+      {/* 📦 Footer */}
       {!isAdmin && (
         <div
           className={`transition-all duration-700 ease-out transform ${
