@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { AuthContext } from "./auth-context";
 import type { AuthContextType, User } from "./auth-context";
 
+// 🌐 URL dinámica para desarrollo y producción
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -9,7 +12,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ✅ Obtener perfil desde el backend (memoizado con useCallback)
   const fetchUser = useCallback(async (token: string) => {
     try {
-      const res = await fetch("http://localhost:3000/auth/me", {
+      const res = await fetch(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -19,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       logout();
     }
-  }, []); // 👈 Ya no cambia entre renders
+  }, []);
 
   // ✅ Verificar sesión al montar
   useEffect(() => {
@@ -29,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setLoading(false);
     }
-  }, [fetchUser]); // 👈 Ahora el warning desaparece
+  }, [fetchUser]);
 
   // ✅ Login
   const login = async (token: string) => {

@@ -9,13 +9,16 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // 🌐 URL base desde variable de entorno o localhost por defecto
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      // 🔑 1. Autenticación (login)
-      const res = await fetch("http://localhost:3000/auth/login", {
+      // 🔑 1. Autenticación
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -28,8 +31,8 @@ export default function Login() {
       // ✅ Guardar token en el contexto
       await login(data.access_token);
 
-      // 👤 2. Obtener datos del usuario autenticado
-      const meRes = await fetch("http://localhost:3000/auth/me", {
+      // 👤 2. Obtener perfil del usuario
+      const meRes = await fetch(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
 
