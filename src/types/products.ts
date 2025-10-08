@@ -1,11 +1,16 @@
 export interface Product {
-  id?: number; // ✅ opcional si lo genera el backend
+  id: number;
   nombre: string;
   descripcion: string;
   precio: number;
   stock: number;
   categoria: string;
   etiqueta?: "Nuevo" | "Oferta" | "Descontinuado";
-  imagenUrl?: string; // ✅ este es el nombre correcto que usas en el frontend
-  estado?: string; // ✅ si tu backend lo usa
+  imagenUrl?: string;
+  estado?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+// ✅ Tipo especial para crear nuevos productos (sin id)
+export type NewProduct = Omit<Product, "id">;

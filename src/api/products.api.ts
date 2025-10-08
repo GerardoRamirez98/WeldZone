@@ -1,7 +1,7 @@
-import type { Product } from "../types/products";
+import type { Product, NewProduct } from "../types/products";
 
-// ✅ URL base del backend (asegúrate que tu .env tenga VITE_API_URL=http://localhost:3000)
-const API_URL = import.meta.env.VITE_API_URL;
+// ✅ URL base del backend
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // 📥 Obtener todos los productos
 export async function getProducts(): Promise<Product[]> {
@@ -12,7 +12,7 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 // 📤 Crear un nuevo producto
-export async function createProduct(product: Product) {
+export async function createProduct(product: NewProduct): Promise<Product> {
   const res = await fetch(`${API_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -20,7 +20,7 @@ export async function createProduct(product: Product) {
   });
 
   if (!res.ok) throw new Error("Error al crear producto");
-  return await res.json();
+  return res.json();
 }
 
 // ✏️ Actualizar un producto

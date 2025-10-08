@@ -18,6 +18,7 @@ export default function App() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith("/admin");
   const isCatalogo = location.pathname === "/";
+  const isLogin = location.pathname === "/login"; // ✅ Detectamos si estamos en login
 
   const [showFooter, setShowFooter] = useState(false);
   const [pageChange, setPageChange] = useState(false);
@@ -36,14 +37,14 @@ export default function App() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isCatalogo]); // ✅ dependencia agregada
+  }, [isCatalogo]);
 
   // ⏱️ Loader global
   useEffect(() => {
     setShowLoader(true);
     const timeout = setTimeout(() => setShowLoader(false), 2000);
     return () => clearTimeout(timeout);
-  }, [location.pathname]); // ✅ ya estaba bien
+  }, [location.pathname]);
 
   // 🧭 Animación footer
   useEffect(() => {
@@ -52,7 +53,7 @@ export default function App() {
       const timeout = setTimeout(() => setPageChange(false), 800);
       return () => clearTimeout(timeout);
     }
-  }, [isCatalogo, isAdmin]); // ✅ agregadas ambas dependencias
+  }, [isCatalogo, isAdmin]);
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
@@ -63,8 +64,8 @@ export default function App() {
         </div>
       )}
 
-      {/* 🧠 Header solo en páginas públicas */}
-      {!isAdmin && <Header onSearch={() => {}} />}
+      {/* 🧠 Header solo en páginas públicas (NO en login ni admin) */}
+      {!isAdmin && !isLogin && <Header onSearch={() => {}} />}
 
       {/* 📦 Rutas */}
       <main className="flex-1">
@@ -90,8 +91,8 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* 📦 Footer */}
-      {!isAdmin && (
+      {/* 📦 Footer solo en páginas públicas (NO en login ni admin) */}
+      {!isAdmin && !isLogin && (
         <div
           className={`transition-all duration-700 ease-out transform ${
             isCatalogo

@@ -2,14 +2,17 @@
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera } from "lucide-react";
-import { categorias, etiquetas } from "../../data/options"; // ✅ importamos opciones
-
+import { categorias, etiquetas } from "../../data/options";
 import type { Product } from "../../types/products";
+import { updateProduct } from "../../api/products.api";
+import { toast } from "sonner";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  producto: Product | null; // ✅ ahora coincide con tu Products.tsx
+  producto: Product;
   onUpdate: (producto: Product) => void;
   onDelete: (id: number) => void;
 }
@@ -29,13 +32,15 @@ export default function EditProductModal({
   const [etiqueta, setEtiqueta] = useState<
     "Nuevo" | "Oferta" | "Descontinuado" | undefined
   >();
-  const [imagen, setImagen] = useState<string>("");
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
+  const [imagenPreview, setImagenPreview] = useState<string>("");
 
   // Estados de confirmación
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // ✅ Cargar datos del producto seleccionado
   useEffect(() => {
     if (producto) {
       setNombre(producto.nombre);
@@ -44,41 +49,70 @@ export default function EditProductModal({
       setStock(producto.stock);
       setCategoria(producto.categoria);
       setEtiqueta(producto.etiqueta);
-      setImagen(producto.imagenUrl || ""); // Aseguramos que sea string
+      setImagenPreview(producto.imagenUrl || "");
+      setImagenFile(null);
     }
   }, [producto]);
 
+  // 📸 Vista previa temporal de imagen nueva
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setImagen(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+    const file = e.target.files?.[0];
+    if (file) {
+      setImagenFile(file);
+      setImagenPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleUpdate = () => {
-    if (!producto) return;
-    const actualizado: Product = {
-      ...producto,
-      nombre,
-      descripcion,
-      precio,
-      stock,
-      categoria,
-      etiqueta,
-      imagenUrl: imagen,
-    };
-    onUpdate(actualizado);
-    onClose();
+  // 💾 Guardar cambios
+  const handleUpdate = async () => {
+    try {
+      let imagenUrl = producto.imagenUrl;
+
+      // 🖼️ Si se selecciona nueva imagen → subirla al backend
+      if (imagenFile) {
+        const formData = new FormData();
+        formData.append("file", imagenFile);
+
+        const res = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error("Error al subir la nueva imagen");
+        const data = await res.json();
+        imagenUrl = data.url;
+      }
+
+      // 🧾 Crear objeto actualizado (solo campos modificados)
+      const actualizado: Partial<Product> = {
+        nombre,
+        descripcion,
+        precio,
+        stock,
+        categoria,
+        etiqueta,
+        imagenUrl,
+      };
+
+      // 🔄 Actualizar en backend
+      const actualizadoDB = await updateProduct(producto.id, actualizado);
+
+      // 🟢 Actualizar UI
+      onUpdate(actualizadoDB);
+      setShowSaveConfirm(false);
+      onClose();
+      toast.success("✅ Producto actualizado correctamente");
+    } catch (err) {
+      console.error("❌ Error al actualizar el producto:", err);
+      toast.error(
+        "❌ Ocurrió un error al actualizar el producto o subir la imagen."
+      );
+    }
   };
 
   return (
     <>
+      {/* 🧾 Modal principal */}
       <Dialog
         open={isOpen}
         onClose={() => setShowCancelConfirm(true)}
@@ -90,7 +124,7 @@ export default function EditProductModal({
             Editar producto
           </Dialog.Title>
 
-          {/* Formulario */}
+          {/* 📋 Formulario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Columna izquierda */}
             <div className="space-y-5">
@@ -104,6 +138,7 @@ export default function EditProductModal({
                 />
                 <label className="label-base">Nombre</label>
               </div>
+
               <div className="relative">
                 <textarea
                   value={descripcion}
@@ -114,6 +149,7 @@ export default function EditProductModal({
                 />
                 <label className="label-base">Descripción</label>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
                   <input
@@ -136,6 +172,7 @@ export default function EditProductModal({
                   <label className="label-base">Stock</label>
                 </div>
               </div>
+
               <div className="relative">
                 <select
                   value={categoria}
@@ -150,6 +187,7 @@ export default function EditProductModal({
                 </select>
                 <label className="label-base">Categoría</label>
               </div>
+
               <div className="relative">
                 <select
                   value={etiqueta || ""}
@@ -182,14 +220,12 @@ export default function EditProductModal({
                 onChange={handleImageUpload}
                 className="w-full text-sm text-zinc-900 dark:text-zinc-100"
               />
-              {imagen ? (
-                <div className="mt-4">
-                  <img
-                    src={imagen}
-                    alt="Preview"
-                    className="w-48 h-48 object-contain border rounded-lg shadow-md"
-                  />
-                </div>
+              {imagenPreview ? (
+                <img
+                  src={imagenPreview}
+                  alt="Preview"
+                  className="mt-4 w-48 h-48 object-contain border rounded-lg shadow-md"
+                />
               ) : (
                 <div className="mt-4 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border rounded-lg text-zinc-400">
                   <Camera size={48} strokeWidth={1.5} />
@@ -281,10 +317,7 @@ export default function EditProductModal({
             </button>
             <button
               className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold"
-              onClick={() => {
-                handleUpdate();
-                setShowSaveConfirm(false);
-              }}
+              onClick={handleUpdate}
             >
               Sí, guardar
             </button>
@@ -320,10 +353,7 @@ export default function EditProductModal({
             <button
               className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold"
               onClick={() => {
-                if (producto?.id !== undefined) {
-                  onDelete(producto.id);
-                }
-
+                onDelete(producto.id);
                 setShowDeleteConfirm(false);
                 onClose();
               }}

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera } from "lucide-react";
-import type { Product } from "../../types/products";
+import type { Product, NewProduct } from "../../types/products";
 import { categorias, etiquetas } from "../../data/options";
-import { supabase } from "../../lib/supabase";
 import { createProduct } from "../../api/products.api";
+import { toast } from "sonner";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -25,7 +27,6 @@ export default function AddProductModal({
   const [etiqueta, setEtiqueta] = useState<"Nuevo" | "Oferta" | undefined>();
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
-
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   // 🔄 Resetear formulario al abrir el modal
@@ -44,46 +45,49 @@ export default function AddProductModal({
     if (isOpen) resetForm();
   }, [isOpen]);
 
-  // 📸 Vista previa de imagen
+  // 📸 Vista previa y carga de imagen
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setImagenFile(file);
       setImagenPreview(URL.createObjectURL(file));
+      toast.success("📸 Imagen cargada correctamente");
     }
   };
 
-  // 📤 Crear producto
+  // 📤 Crear producto con indicador de carga
   const handleSubmit = async () => {
     if (!nombre) {
-      alert("⚠️ El nombre es obligatorio");
+      toast.warning("⚠️ El nombre es obligatorio");
       return;
     }
+
+    // Mostramos loading toast mientras sube
+    const toastId = toast.loading("Subiendo producto...");
 
     try {
       let imagenUrl: string | undefined;
 
-      // 1️⃣ Subir imagen si existe
+      // 1️⃣ Subir imagen al backend (si existe)
       if (imagenFile) {
-        const fileName = `${Date.now()}-${imagenFile.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("products")
-          .upload(fileName, imagenFile);
+        toast.message("📤 Subiendo imagen...");
+        const formData = new FormData();
+        formData.append("file", imagenFile);
 
-        if (uploadError) {
-          throw new Error(`Error al subir imagen: ${uploadError.message}`);
-        }
+        const res = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData,
+        });
 
-        // ✅ Obtener URL pública
-        const { data: publicUrlData } = supabase.storage
-          .from("products")
-          .getPublicUrl(fileName);
+        if (!res.ok) throw new Error("Error al subir la imagen al backend");
 
-        imagenUrl = publicUrlData?.publicUrl;
+        const data = await res.json();
+        imagenUrl = data.url;
+        toast.success("✅ Imagen subida correctamente", { id: toastId });
       }
 
-      // 2️⃣ Crear objeto producto
-      const nuevoProducto: Product = {
+      // 2️⃣ Crear producto
+      const nuevoProducto: NewProduct = {
         nombre,
         descripcion: descripcion || "Sin descripción",
         precio,
@@ -94,25 +98,25 @@ export default function AddProductModal({
         estado: "Activo",
       };
 
-      // 3️⃣ Enviar al backend
       const productoCreado = await createProduct(nuevoProducto);
 
-      // 4️⃣ Actualizar UI
+      // 3️⃣ Actualizar UI
       onAdd(productoCreado);
-      alert("✅ Producto creado correctamente");
+      toast.success("✅ Producto creado correctamente", { id: toastId });
       resetForm();
       setShowSaveConfirm(false);
       onClose();
-    } catch {
-      alert(
-        "❌ Error al crear el producto. Revisa la configuración del backend o Supabase."
-      );
+    } catch (error) {
+      console.error(error);
+      toast.error("❌ Error al crear el producto o subir la imagen.", {
+        id: toastId,
+      });
     }
   };
 
   return (
     <>
-      {/* 🧾 Modal de formulario */}
+      {/* 🧾 Modal */}
       <Dialog
         open={isOpen}
         onClose={onClose}
@@ -126,7 +130,7 @@ export default function AddProductModal({
 
           {/* 📋 Formulario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 🧾 Columna izquierda */}
+            {/* Columna izquierda */}
             <div className="space-y-5">
               <div className="relative">
                 <input
@@ -211,30 +215,53 @@ export default function AddProductModal({
 
             {/* 📸 Columna derecha - Imagen */}
             <div className="flex flex-col items-center justify-center">
-              <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400">
-                Imagen
+              <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400 font-semibold">
+                Imagen del producto
               </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="w-full text-sm"
-              />
+
+              {/* Botones de acción */}
+              <div className="flex gap-2 mb-3">
+                {/* 📷 Tomar foto */}
+                <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-yellow-500 text-black font-medium hover:bg-yellow-600 cursor-pointer transition">
+                  <Camera size={18} />
+                  Tomar foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+
+                {/* 📁 Subir manualmente */}
+                <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-700 text-white font-medium hover:bg-zinc-600 cursor-pointer transition">
+                  📁 Subir archivo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
+
+              {/* Vista previa */}
               {imagenPreview ? (
                 <img
                   src={imagenPreview}
                   alt="Preview"
-                  className="mt-4 w-48 h-48 object-contain border rounded-lg shadow-md"
+                  className="mt-2 w-48 h-48 object-contain border-2 border-yellow-500 rounded-xl shadow-lg"
                 />
               ) : (
-                <div className="mt-4 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border rounded-lg text-zinc-400">
+                <div className="mt-2 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400">
                   <Camera size={48} strokeWidth={1.5} />
                 </div>
               )}
             </div>
           </div>
 
-          {/* ✅ Botones */}
+          {/* Botones */}
           <div className="flex justify-end gap-2 mt-6">
             <button
               className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 transition text-sm"
@@ -252,7 +279,7 @@ export default function AddProductModal({
         </div>
       </Dialog>
 
-      {/* 💾 Confirmación de Guardar */}
+      {/* Confirmación */}
       <Dialog
         open={showSaveConfirm}
         onClose={() => setShowSaveConfirm(false)}
