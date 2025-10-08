@@ -158,8 +158,13 @@ export default function AddProductModal({
                 <div className="relative">
                   <input
                     type="number"
-                    value={precio}
-                    onChange={(e) => setPrecio(Number(e.target.value))}
+                    min={0}
+                    value={precio || ""}
+                    onChange={(e) =>
+                      setPrecio(
+                        e.target.value === "" ? 0 : Number(e.target.value)
+                      )
+                    }
                     className="input-base peer"
                     placeholder=" "
                   />
@@ -168,8 +173,13 @@ export default function AddProductModal({
                 <div className="relative">
                   <input
                     type="number"
-                    value={stock}
-                    onChange={(e) => setStock(Number(e.target.value))}
+                    min={0}
+                    value={stock || ""}
+                    onChange={(e) =>
+                      setStock(
+                        e.target.value === "" ? 0 : Number(e.target.value)
+                      )
+                    }
                     className="input-base peer"
                     placeholder=" "
                   />
@@ -219,12 +229,11 @@ export default function AddProductModal({
                 Imagen del producto
               </label>
 
-              {/* Botones de acción */}
-              <div className="flex gap-2 mb-3">
-                {/* 📷 Tomar foto */}
-                <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-yellow-500 text-black font-medium hover:bg-yellow-600 cursor-pointer transition">
-                  <Camera size={18} />
-                  Tomar foto
+              <div className="flex flex-wrap justify-center gap-2 mb-3">
+                {/* Botón Tomar foto */}
+                <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-yellow-500 text-black text-xs font-medium hover:bg-yellow-600 cursor-pointer transition">
+                  <Camera size={14} strokeWidth={1.5} />
+                  <span>Tomar</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -234,9 +243,9 @@ export default function AddProductModal({
                   />
                 </label>
 
-                {/* 📁 Subir manualmente */}
-                <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-700 text-white font-medium hover:bg-zinc-600 cursor-pointer transition">
-                  📁 Subir archivo
+                {/* Botón Subir archivo */}
+                <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-zinc-700 text-white text-xs font-medium hover:bg-zinc-600 cursor-pointer transition">
+                  <span>📁 Subir</span>
                   <input
                     type="file"
                     accept="image/*"
