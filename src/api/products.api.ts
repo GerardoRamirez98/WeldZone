@@ -5,7 +5,6 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // 📥 Obtener todos los productos
 export async function getProducts(): Promise<Product[]> {
-  console.log("📡 Solicitando productos desde:", `${API_URL}/products`);
   const res = await fetch(`${API_URL}/products`);
   if (!res.ok) throw new Error("Error al obtener productos");
   return res.json();
@@ -13,8 +12,6 @@ export async function getProducts(): Promise<Product[]> {
 
 // 📤 Crear un nuevo producto
 export async function createProduct(product: NewProduct): Promise<Product> {
-  console.log("📦 Enviando producto:", product);
-
   const res = await fetch(`${API_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -24,7 +21,6 @@ export async function createProduct(product: NewProduct): Promise<Product> {
   // 🔍 Si falla, muestra respuesta completa del backend
   if (!res.ok) {
     const errorText = await res.text();
-    console.error("❌ Error al crear producto:", errorText);
     throw new Error(`Error al crear producto: ${res.status} - ${errorText}`);
   }
 
@@ -53,8 +49,6 @@ export async function deleteProduct(id: number): Promise<void> {
   });
 
   if (!res.ok) {
-    const errorText = await res.text();
-    console.error("❌ Error backend:", errorText);
     throw new Error(`Error al eliminar producto ${id}`);
   }
 }

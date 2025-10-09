@@ -112,8 +112,7 @@ export default function AddProductModal({
       resetForm();
       setShowSaveConfirm(false);
       onClose();
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("❌ Error al crear el producto o subir la imagen.", {
         id: toastId,
       });

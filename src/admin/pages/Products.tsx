@@ -18,7 +18,10 @@ export default function Products() {
   useEffect(() => {
     getProducts()
       .then(setProducts)
-      .catch((err) => console.error("❌ Error al cargar productos:", err));
+      .catch(() => {
+        toast.error("❌ Error al cargar productos desde el servidor");
+        setProducts([]);
+      });
   }, []);
 
   // ➕ Agregar producto
@@ -178,8 +181,7 @@ export default function Products() {
                   await deleteProduct(productoDelete.id); // 🔥 Llama al backend
                   handleDeleteProduct(productoDelete.id); // 🔄 Actualiza la lista local
                   toast.success("🗑️ Producto eliminado correctamente");
-                } catch (error) {
-                  console.error("❌ Error al eliminar producto:", error);
+                } catch {
                   toast.error("No se pudo eliminar el producto");
                 } finally {
                   setProductoDelete(null);
