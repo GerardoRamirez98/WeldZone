@@ -22,7 +22,13 @@ export default function AddProductModal({
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState<number>(0);
+
+  const [precioInput, setPrecioInput] = useState(precio.toString());
+
   const [stock, setStock] = useState<number>(0);
+
+  const [stockInput, setStockInput] = useState(stock.toString());
+
   const [categoria, setCategoria] = useState("General");
   const [etiqueta, setEtiqueta] = useState<"Nuevo" | "Oferta" | undefined>();
   const [imagenFile, setImagenFile] = useState<File | null>(null);
@@ -154,32 +160,88 @@ export default function AddProductModal({
                 <label className="label-base">Descripción</label>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* 💲 Precio y Stock */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                {/* 💰 PRECIO */}
                 <div className="relative">
                   <input
-                    type="number"
-                    min={0}
-                    value={precio || ""}
-                    onChange={(e) =>
-                      setPrecio(
-                        e.target.value === "" ? 0 : Number(e.target.value)
-                      )
-                    }
+                    type="text"
+                    inputMode="decimal"
+                    value={precioInput} // 👈 usamos un estado temporal para texto
+                    onChange={(e) => {
+                      const value = e.target.value.replace(",", "."); // corrige comas
+                      // Permitimos vacío, números, o un punto decimal
+                      if (/^[0-9]*[.,]?[0-9]*$/.test(value)) {
+                        setPrecioInput(value);
+                      }
+                    }}
+                    onBlur={() => {
+                      // Convertimos a número limpio
+                      const num = parseFloat(precioInput);
+                      if (isNaN(num)) {
+                        setPrecio(0);
+                        setPrecioInput("0.00");
+                        return;
+                      }
+
+                      // Evita negativos y redondea
+                      const positive = Math.abs(num);
+                      setPrecio(positive); // valor numérico real
+                      setPrecioInput(
+                        positive.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      ); // valor formateado
+                    }}
+                    onFocus={() => {
+                      // Al enfocar, quitamos separadores para que sea editable cómodamente
+                      setPrecioInput(precio.toString());
+                    }}
+                    onKeyDown={(e) => {
+                      if (["e", "E", "+", "-"].includes(e.key))
+                        e.preventDefault();
+                    }}
                     className="input-base peer"
                     placeholder=" "
                   />
                   <label className="label-base">Precio</label>
                 </div>
+
+                {/* 📦 STOCK */}
                 <div className="relative">
                   <input
-                    type="number"
-                    min={0}
-                    value={stock || ""}
-                    onChange={(e) =>
-                      setStock(
-                        e.target.value === "" ? 0 : Number(e.target.value)
-                      )
-                    }
+                    type="text"
+                    inputMode="numeric"
+                    value={stockInput}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, ""); // elimina todo lo que no sea dígito
+                      if (/^\d*$/.test(value)) {
+                        setStockInput(value);
+                      }
+                    }}
+                    onBlur={() => {
+                      const num = parseInt(stockInput, 10);
+                      if (isNaN(num)) {
+                        setStock(0);
+                        setStockInput("0");
+                        return;
+                      }
+
+                      const positive = Math.abs(num);
+                      setStock(positive);
+                      setStockInput(
+                        positive.toLocaleString("en-US") // 👈 separador de miles
+                      );
+                    }}
+                    onFocus={() => {
+                      // Quita formato al volver a editar
+                      setStockInput(stock.toString());
+                    }}
+                    onKeyDown={(e) => {
+                      if (["e", "E", "+", "-", "."].includes(e.key))
+                        e.preventDefault();
+                    }}
                     className="input-base peer"
                     placeholder=" "
                   />

@@ -1,7 +1,7 @@
 // src/admin/components/EditProductModal.tsx
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { Camera } from "lucide-react";
+import { Camera, Upload, Trash2 } from "lucide-react";
 import { categorias, etiquetas } from "../../data/options";
 import type { Product } from "../../types/products";
 import { updateProduct } from "../../api/products.api";
@@ -26,35 +26,38 @@ export default function EditProductModal({
 }: EditProductModalProps) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [precio, setPrecio] = useState<number>(0);
-  const [stock, setStock] = useState<number>(0);
+  const [precio, setPrecio] = useState(0);
+  const [precioInput, setPrecioInput] = useState("0.00");
+  const [stock, setStock] = useState(0);
+  const [stockInput, setStockInput] = useState("0");
   const [categoria, setCategoria] = useState("General");
   const [etiqueta, setEtiqueta] = useState<
     "Nuevo" | "Oferta" | "Descontinuado" | undefined
   >();
   const [imagenFile, setImagenFile] = useState<File | null>(null);
-  const [imagenPreview, setImagenPreview] = useState<string>("");
+  const [imagenPreview, setImagenPreview] = useState("");
 
-  // Estados de confirmación
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // ✅ Cargar datos del producto seleccionado
+  // ✅ Cargar producto actual
   useEffect(() => {
     if (producto) {
       setNombre(producto.nombre);
-      setDescripcion(producto.descripcion);
+      setDescripcion(producto.descripcion || "");
       setPrecio(producto.precio);
+      setPrecioInput(producto.precio.toFixed(2));
       setStock(producto.stock);
-      setCategoria(producto.categoria);
+      setStockInput(producto.stock.toString());
+      setCategoria(producto.categoria || "General");
       setEtiqueta(producto.etiqueta);
       setImagenPreview(producto.imagenUrl || "");
       setImagenFile(null);
     }
   }, [producto]);
 
-  // 📸 Vista previa temporal de imagen nueva
+  // 📸 Manejar carga de imagen
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -68,7 +71,7 @@ export default function EditProductModal({
     try {
       let imagenUrl = producto.imagenUrl;
 
-      // 🖼️ Si se selecciona nueva imagen → subirla al backend
+      // 🖼️ Subir nueva imagen si hay
       if (imagenFile) {
         const formData = new FormData();
         formData.append("file", imagenFile);
@@ -83,7 +86,6 @@ export default function EditProductModal({
         imagenUrl = data.url;
       }
 
-      // 🧾 Crear objeto actualizado (solo campos modificados)
       const actualizado: Partial<Product> = {
         nombre,
         descripcion,
@@ -94,25 +96,19 @@ export default function EditProductModal({
         imagenUrl,
       };
 
-      // 🔄 Actualizar en backend
       const actualizadoDB = await updateProduct(producto.id, actualizado);
-
-      // 🟢 Actualizar UI
       onUpdate(actualizadoDB);
       setShowSaveConfirm(false);
       onClose();
       toast.success("✅ Producto actualizado correctamente");
     } catch (err) {
       console.error("❌ Error al actualizar el producto:", err);
-      toast.error(
-        "❌ Ocurrió un error al actualizar el producto o subir la imagen."
-      );
+      toast.error("❌ No se pudo actualizar el producto o subir la imagen.");
     }
   };
 
   return (
     <>
-      {/* 🧾 Modal principal */}
       <Dialog
         open={isOpen}
         onClose={() => setShowCancelConfirm(true)}
@@ -128,6 +124,7 @@ export default function EditProductModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Columna izquierda */}
             <div className="space-y-5">
+              {/* Nombre */}
               <div className="relative">
                 <input
                   type="text"
@@ -139,6 +136,7 @@ export default function EditProductModal({
                 <label className="label-base">Nombre</label>
               </div>
 
+              {/* Descripción */}
               <div className="relative">
                 <textarea
                   value={descripcion}
@@ -150,22 +148,75 @@ export default function EditProductModal({
                 <label className="label-base">Descripción</label>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Precio y Stock */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                {/* Precio */}
                 <div className="relative">
                   <input
-                    type="number"
-                    value={precio}
-                    onChange={(e) => setPrecio(Number(e.target.value))}
+                    type="text"
+                    inputMode="decimal"
+                    value={precioInput}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(",", ".");
+                      if (/^[0-9]*[.,]?[0-9]*$/.test(value)) {
+                        setPrecioInput(value);
+                      }
+                    }}
+                    onBlur={() => {
+                      const num = parseFloat(precioInput);
+                      if (isNaN(num)) {
+                        setPrecio(0);
+                        setPrecioInput("0.00");
+                        return;
+                      }
+                      const positive = Math.abs(num);
+                      setPrecio(positive);
+                      setPrecioInput(
+                        positive.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      );
+                    }}
+                    onFocus={() => setPrecioInput(precio.toString())}
+                    onKeyDown={(e) => {
+                      if (["e", "E", "+", "-"].includes(e.key))
+                        e.preventDefault();
+                    }}
                     className="input-base peer"
                     placeholder=" "
                   />
                   <label className="label-base">Precio</label>
                 </div>
+
+                {/* Stock */}
                 <div className="relative">
                   <input
-                    type="number"
-                    value={stock}
-                    onChange={(e) => setStock(Number(e.target.value))}
+                    type="text"
+                    inputMode="numeric"
+                    value={stockInput}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      if (/^\d*$/.test(value)) {
+                        setStockInput(value);
+                      }
+                    }}
+                    onBlur={() => {
+                      const num = parseInt(stockInput, 10);
+                      if (isNaN(num)) {
+                        setStock(0);
+                        setStockInput("0");
+                        return;
+                      }
+                      const positive = Math.abs(num);
+                      setStock(positive);
+                      setStockInput(positive.toLocaleString("en-US"));
+                    }}
+                    onFocus={() => setStockInput(stock.toString())}
+                    onKeyDown={(e) => {
+                      if (["e", "E", "+", "-", "."].includes(e.key))
+                        e.preventDefault();
+                    }}
                     className="input-base peer"
                     placeholder=" "
                   />
@@ -173,6 +224,7 @@ export default function EditProductModal({
                 </div>
               </div>
 
+              {/* Categoría */}
               <div className="relative">
                 <select
                   value={categoria}
@@ -188,12 +240,17 @@ export default function EditProductModal({
                 <label className="label-base">Categoría</label>
               </div>
 
+              {/* Etiqueta */}
               <div className="relative">
                 <select
                   value={etiqueta || ""}
                   onChange={(e) =>
                     setEtiqueta(
-                      e.target.value as "Nuevo" | "Oferta" | undefined
+                      e.target.value as
+                        | "Nuevo"
+                        | "Oferta"
+                        | "Descontinuado"
+                        | undefined
                     )
                   }
                   className="select-base peer"
@@ -209,32 +266,71 @@ export default function EditProductModal({
               </div>
             </div>
 
-            {/* Columna derecha */}
+            {/* 📸 Columna derecha - Imagen */}
             <div className="flex flex-col items-center justify-center">
-              <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400">
-                Imagen
+              <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400 font-semibold">
+                Imagen del producto
               </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="w-full text-sm text-zinc-900 dark:text-zinc-100"
-              />
+
+              {/* 🔘 Botones de acción minimalistas */}
+              <div className="flex justify-center items-center gap-3 mb-4">
+                {/* 📸 Tomar foto */}
+                <label className="flex items-center justify-center min-w-[40px] h-[40px] rounded-full bg-yellow-500 text-white shadow-sm hover:bg-yellow-600 active:scale-[0.95] cursor-pointer transition">
+                  <Camera size={18} strokeWidth={1.8} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+
+                {/* 📁 Subir archivo */}
+                <label className="flex items-center justify-center min-w-[40px] h-[40px] rounded-full bg-zinc-700 text-white shadow-sm hover:bg-zinc-600 active:scale-[0.95] cursor-pointer transition">
+                  <Upload size={18} strokeWidth={1.8} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+
+                {/* 🗑️ Quitar imagen */}
+                <label
+                  onClick={() => {
+                    if (!imagenPreview) return;
+                    setImagenFile(null);
+                    setImagenPreview("");
+                    toast.info("🗑️ Imagen quitada del producto");
+                  }}
+                  className={`flex items-center justify-center min-w-[40px] h-[40px] rounded-full shadow-sm active:scale-[0.95] transition ${
+                    imagenPreview
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-zinc-400 text-zinc-300 cursor-not-allowed opacity-70"
+                  }`}
+                >
+                  <Trash2 size={18} strokeWidth={1.8} />
+                </label>
+              </div>
+
+              {/* 🖼️ Vista previa */}
               {imagenPreview ? (
                 <img
                   src={imagenPreview}
                   alt="Preview"
-                  className="mt-4 w-48 h-48 object-contain border rounded-lg shadow-md"
+                  className="mt-2 w-48 h-48 object-contain border-2 border-yellow-500 rounded-xl shadow-lg transition-all duration-300"
                 />
               ) : (
-                <div className="mt-4 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border rounded-lg text-zinc-400">
+                <div className="mt-2 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400 transition-all duration-300">
                   <Camera size={48} strokeWidth={1.5} />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Botones */}
+          {/* Botones inferiores */}
           <div className="flex justify-between items-center gap-2 mt-6">
             <button
               className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm"
@@ -260,7 +356,7 @@ export default function EditProductModal({
         </div>
       </Dialog>
 
-      {/* Confirmación cancelar */}
+      {/* Confirmaciones */}
       <Dialog
         open={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
@@ -294,7 +390,6 @@ export default function EditProductModal({
         </div>
       </Dialog>
 
-      {/* Confirmación guardar */}
       <Dialog
         open={showSaveConfirm}
         onClose={() => setShowSaveConfirm(false)}
@@ -325,7 +420,6 @@ export default function EditProductModal({
         </div>
       </Dialog>
 
-      {/* Confirmación eliminar */}
       <Dialog
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
