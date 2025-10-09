@@ -6,6 +6,7 @@ import { Dialog } from "@headlessui/react";
 import type { Product } from "../../types/products";
 import { getProducts } from "../../api/products.api";
 import { toast } from "sonner";
+import { deleteProduct } from "../../api/products.api";
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -174,9 +175,6 @@ export default function Products() {
                 if (!productoDelete?.id) return;
 
                 try {
-                  const { deleteProduct } = await import(
-                    "../../api/products.api"
-                  );
                   await deleteProduct(productoDelete.id); // 🔥 Llama al backend
                   handleDeleteProduct(productoDelete.id); // 🔄 Actualiza la lista local
                   toast.success("🗑️ Producto eliminado correctamente");

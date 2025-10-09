@@ -48,6 +48,13 @@ export async function updateProduct(
 
 // 🗑️ Eliminar un producto
 export async function deleteProduct(id: number): Promise<void> {
-  const res = await fetch(`${API_URL}/products/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Error al eliminar producto");
+  const res = await fetch(`${API_URL}/products/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Error backend:", errorText);
+    throw new Error(`Error al eliminar producto ${id}`);
+  }
 }
