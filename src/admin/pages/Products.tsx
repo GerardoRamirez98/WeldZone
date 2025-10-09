@@ -5,6 +5,7 @@ import EditProductModal from "../components/EditProductModal";
 import { Dialog } from "@headlessui/react";
 import type { Product } from "../../types/products";
 import { getProducts } from "../../api/products.api";
+import { toast } from "sonner";
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -169,11 +170,22 @@ export default function Products() {
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm font-semibold"
-              onClick={() => {
-                if (productoDelete?.id !== undefined) {
-                  handleDeleteProduct(productoDelete.id);
+              onClick={async () => {
+                if (!productoDelete?.id) return;
+
+                try {
+                  const { deleteProduct } = await import(
+                    "../../api/products.api"
+                  );
+                  await deleteProduct(productoDelete.id); // 🔥 Llama al backend
+                  handleDeleteProduct(productoDelete.id); // 🔄 Actualiza la lista local
+                  toast.success("🗑️ Producto eliminado correctamente");
+                } catch (error) {
+                  console.error("❌ Error al eliminar producto:", error);
+                  toast.error("No se pudo eliminar el producto");
+                } finally {
+                  setProductoDelete(null);
                 }
-                setProductoDelete(null);
               }}
             >
               Sí, eliminar
