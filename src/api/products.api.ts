@@ -13,13 +13,21 @@ export async function getProducts(): Promise<Product[]> {
 
 // 📤 Crear un nuevo producto
 export async function createProduct(product: NewProduct): Promise<Product> {
+  console.log("📦 Enviando producto:", product);
+
   const res = await fetch(`${API_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(product),
   });
 
-  if (!res.ok) throw new Error("Error al crear producto");
+  // 🔍 Si falla, muestra respuesta completa del backend
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Error al crear producto:", errorText);
+    throw new Error(`Error al crear producto: ${res.status} - ${errorText}`);
+  }
+
   return res.json();
 }
 
