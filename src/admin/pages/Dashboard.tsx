@@ -1,8 +1,4 @@
-import { useState } from "react";
-import {
-  products as initialProducts,
-  type Producto,
-} from "../../data/products";
+import { useState, useEffect } from "react";
 import {
   Package,
   TrendingDown,
@@ -13,17 +9,46 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import RestockModal from "../components/RestockModal";
 
-export default function Dashboard() {
-  const [products, setProducts] = useState<Producto[]>(initialProducts);
-  const [productoRestock, setProductoRestock] = useState<Producto | null>(null);
+// 🧩 Tipo de producto según tu backend
+type Producto = {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  stock: number;
+  categoria?: string;
+  etiqueta?: string;
+  estado?: string;
+  imagenUrl?: string;
+  specFileUrl?: string;
+};
 
-  // 👇 Nuevo estado: stock mínimo definido por el admin
+export default function Dashboard() {
+  const [products, setProducts] = useState<Producto[]>([]);
+  const [productoRestock, setProductoRestock] = useState<Producto | null>(null);
   const [minStock, setMinStock] = useState<number>(5);
 
+  // 🔄 Cargar productos desde el backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/products");
+        if (!res.ok) throw new Error("Error al obtener productos");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error("❌ Error al cargar productos:", err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // 📊 Cálculos de métricas
   const totalProductos = products.length;
-  const activos = products.filter((p) => p.estado === "Activo").length;
+  const activos = products.filter((p) => p.estado === "activo").length;
   const descontinuados = products.filter(
-    (p) => p.estado === "Descontinuado"
+    (p) => p.estado === "descontinuado"
   ).length;
 
   const stockTotal = products.reduce((acc, p) => acc + p.stock, 0);
@@ -35,7 +60,8 @@ export default function Dashboard() {
   // Agrupar stock por categoría
   const stockPorCategoria = products.reduce(
     (acc: Record<string, number>, p) => {
-      acc[p.categoria] = (acc[p.categoria] || 0) + p.stock;
+      const cat = p.categoria || "Sin categoría";
+      acc[cat] = (acc[cat] || 0) + p.stock;
       return acc;
     },
     {}
@@ -48,19 +74,32 @@ export default function Dashboard() {
     })
   );
 
-  // Filtrar solo productos con bajo stock según minStock
+  // Productos con bajo stock
   const lowStock = products
     .filter((p) => p.stock <= minStock)
     .sort((a, b) => a.stock - b.stock);
 
   const COLORS = ["#facc15", "#3b82f6", "#22c55e", "#ef4444", "#a855f7"];
 
-  // 🔄 función que actualiza el stock y cierra modal
-  const handleRestock = (id: number, nuevoStock: number) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p))
-    );
-    setProductoRestock(null); // 👈 cerramos modal al guardar
+  // ✏️ Reabastecer (PUT al backend + actualizar UI)
+  const handleRestock = async (id: number, nuevoStock: number) => {
+    try {
+      const res = await fetch(`http://localhost:3000/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: nuevoStock }),
+      });
+
+      if (!res.ok) throw new Error("Error al actualizar stock");
+
+      // Actualizar en el frontend
+      setProducts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, stock: nuevoStock } : p))
+      );
+      setProductoRestock(null);
+    } catch (err) {
+      console.error("❌ Error al reabastecer:", err);
+    }
   };
 
   return (
@@ -115,7 +154,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Grid con gráfica y lista crítica en paralelo */}
+      {/* Grid con gráfica y lista de bajo stock */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfica por categoría */}
         <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-4">
@@ -202,7 +241,7 @@ export default function Dashboard() {
   );
 }
 
-/* Componente reutilizable para métricas */
+/* 🧱 Componente reutilizable para métricas */
 function Card({
   icon,
   label,
