@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import AdminImage from "../components/AdminImage";
 import AddProductModal from "../components/AddProductModal";
 import EditProductModal from "../components/EditProductModal";
 import { Dialog } from "@headlessui/react";
 import type { Product } from "../../types/products";
-import { getProducts } from "../../api/products.api";
+import { getProducts, deleteProduct } from "../../api/products.api";
 import { toast } from "sonner";
-import { deleteProduct } from "../../api/products.api";
+import { FileText, Tag } from "lucide-react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -14,7 +14,7 @@ export default function Products() {
   const [productoEdit, setProductoEdit] = useState<Product | null>(null);
   const [productoDelete, setProductoDelete] = useState<Product | null>(null);
 
-  // 🚀 Cargar productos desde el backend al montar
+  // 🚀 Cargar productos desde el backend
   useEffect(() => {
     getProducts()
       .then(setProducts)
@@ -24,120 +24,191 @@ export default function Products() {
       });
   }, []);
 
-  // ➕ Agregar producto
-  const handleAddProduct = (nuevoProducto: Product) => {
-    setProducts((prev) => [...prev, nuevoProducto]);
-  };
+  const handleAddProduct = (nuevo: Product) =>
+    setProducts((prev) => [...prev, nuevo]);
 
-  // ✏️ Editar producto
-  const handleUpdateProduct = (actualizado: Product) => {
+  const handleUpdateProduct = (actualizado: Product) =>
     setProducts((prev) =>
       prev.map((p) => (p.id === actualizado.id ? actualizado : p))
     );
-  };
 
-  // 🗑️ Eliminar producto
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = (id: number) =>
     setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      {/* 🧭 Header */}
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Gestión de Productos</h2>
         <button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition font-medium"
           onClick={() => setIsAddModalOpen(true)}
         >
           + Agregar
         </button>
       </div>
 
-      {/* Grid con productos */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-stretch">
-        {products.map((p) => (
-          <div
-            key={p.id}
-            className="bg-white dark:bg-zinc-800 shadow rounded-lg p-4 flex flex-col h-full"
-          >
-            {/* Imagen */}
-            <AdminImage src={p.imagenUrl || ""} alt={p.nombre} />
+      {/* 🗂️ Grid de productos */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {products.map((p) => {
+          const isAgotado = p.stock <= 0;
 
-            {/* Etiquetas */}
-            <div className="flex gap-2 mt-3 flex-wrap">
+          return (
+            <div
+              key={p.id}
+              className={`group relative rounded-2xl border bg-white p-3 shadow-sm transition 
+                border-zinc-200 hover:shadow-md 
+                dark:border-zinc-800 dark:bg-zinc-900
+                ${isAgotado ? "opacity-60 grayscale cursor-not-allowed" : ""}`}
+            >
+              {/* 🏷️ Etiqueta */}
               {p.etiqueta && (
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    p.etiqueta === "Nuevo"
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
-                      : p.etiqueta === "Oferta"
-                      ? "bg-orange-100 text-orange-700 dark:bg-orange-800 dark:text-orange-200"
-                      : "bg-gray-300 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                  }`}
+                <div
+                  className={`absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md
+                    transition-transform duration-300 group-hover:scale-110 animate-[pulse-soft_3s_ease-in-out_infinite]
+                    ${
+                      p.etiqueta === "Nuevo"
+                        ? "bg-gradient-to-r from-blue-500 to-blue-700"
+                        : p.etiqueta === "Oferta"
+                        ? "bg-gradient-to-r from-red-500 to-red-700"
+                        : "bg-zinc-600"
+                    }`}
                 >
+                  <Tag className="h-3 w-3" />
                   {p.etiqueta}
-                </span>
+                </div>
               )}
-            </div>
 
-            {/* Nombre */}
-            <h3 className="font-semibold text-lg mt-2 min-h-[56px] flex items-center">
-              {p.nombre}
-            </h3>
-
-            {/* Descripción */}
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2 min-h-[40px]">
-              {p.descripcion}
-            </p>
-
-            {/* Precio + Stock */}
-            <div className="flex justify-between items-center mt-3">
-              <span className="font-bold text-yellow-600 dark:text-yellow-400">
-                ${p.precio}
-              </span>
-              {p.stock > 5 ? (
-                <span className="text-green-600 font-bold text-sm">
-                  {p.stock} en stock
-                </span>
-              ) : p.stock > 0 ? (
-                <span className="text-orange-500 font-bold text-sm">
-                  {p.stock} por agotarse
-                </span>
-              ) : (
-                <span className="text-red-600 font-bold text-sm">
-                  Sin existencias
-                </span>
+              {/* 🔴 Agotado */}
+              {isAgotado && (
+                <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
+                  Agotado
+                </div>
               )}
-            </div>
 
-            {/* Acciones */}
-            <div className="flex gap-2 mt-auto pt-4">
-              <button
-                className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition w-full"
-                onClick={() => setProductoEdit(p)}
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => setProductoDelete(p)}
-                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition w-full"
-              >
-                Eliminar
-              </button>
+              {/* 🖼️ Imagen con tooltip de especificaciones */}
+              <div className="aspect-square overflow-hidden rounded-xl relative group">
+                {p.imagenUrl ? (
+                  <img
+                    src={p.imagenUrl}
+                    alt={p.nombre}
+                    className={`h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] ${
+                      isAgotado ? "grayscale" : ""
+                    }`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-zinc-500 text-sm rounded-xl">
+                    Sin imagen
+                  </div>
+                )}
+
+                {/* 📄 Tooltip Ver Especificaciones */}
+                {p.specFileUrl && (
+                  <Tooltip.Provider delayDuration={150}>
+                    <Tooltip.Root>
+                      <Tooltip.Trigger asChild>
+                        <label
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                              `https://docs.google.com/viewer?url=${encodeURIComponent(
+                                p.specFileUrl as string
+                              )}&embedded=true`,
+                              "_blank"
+                            );
+                          }}
+                          className="
+            absolute bottom-2 right-2 z-20 flex items-center justify-center
+            w-9 h-9 rounded-full bg-yellow-500 hover:bg-yellow-400 
+            shadow-md transition active:scale-95 cursor-pointer
+            hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
+            animate-[pulse-soft_3s_ease-in-out_infinite]
+          "
+                        >
+                          <FileText
+                            className="w-4 h-4 text-white"
+                            strokeWidth={2.2}
+                          />
+                        </label>
+                      </Tooltip.Trigger>
+
+                      {/* ✨ Tooltip animado */}
+                      <Tooltip.Portal>
+                        <Tooltip.Content
+                          side="top"
+                          sideOffset={6}
+                          className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-100 shadow-sm 
+                     data-[state=delayed-open]:animate-fadeIn 
+                     data-[state=closed]:animate-fadeOut"
+                        >
+                          Ver ficha técnica
+                          <Tooltip.Arrow className="fill-zinc-800" />
+                        </Tooltip.Content>
+                      </Tooltip.Portal>
+                    </Tooltip.Root>
+                  </Tooltip.Provider>
+                )}
+              </div>
+
+              {/* 📋 Información */}
+              <div className="mt-3 flex flex-col justify-between">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
+                  {p.nombre}
+                </h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 min-h-[32px]">
+                  {p.descripcion || "Sin descripción"}
+                </p>
+
+                <div className="mt-2 flex justify-between items-center">
+                  <span className="text-sm font-bold text-orange-500 dark:text-orange-400">
+                    ${p.precio.toLocaleString("es-MX")}
+                  </span>
+
+                  {p.stock > 5 ? (
+                    <span className="text-green-600 text-xs font-semibold">
+                      {p.stock} en stock
+                    </span>
+                  ) : p.stock > 0 ? (
+                    <span className="text-orange-500 text-xs font-semibold">
+                      {p.stock} por agotarse
+                    </span>
+                  ) : (
+                    <span className="text-red-600 text-xs font-semibold">
+                      Sin existencias
+                    </span>
+                  )}
+                </div>
+
+                {/* ⚙️ Acciones */}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    className="w-full rounded-md bg-yellow-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-600 transition"
+                    onClick={() => setProductoEdit(p)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="w-full rounded-md bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600 transition"
+                    onClick={() => setProductoDelete(p)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Modal Agregar */}
+      {/* 🟢 Modal Agregar */}
       <AddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddProduct}
       />
 
-      {/* Modal Editar */}
+      {/* ✏️ Modal Editar */}
       {productoEdit && (
         <EditProductModal
           isOpen={!!productoEdit}
@@ -151,7 +222,7 @@ export default function Products() {
         />
       )}
 
-      {/* Confirmación de eliminación */}
+      {/* 🗑️ Confirmación Eliminar */}
       <Dialog
         open={!!productoDelete}
         onClose={() => setProductoDelete(null)}
@@ -178,8 +249,8 @@ export default function Products() {
                 if (!productoDelete?.id) return;
 
                 try {
-                  await deleteProduct(productoDelete.id); // 🔥 Llama al backend
-                  handleDeleteProduct(productoDelete.id); // 🔄 Actualiza la lista local
+                  await deleteProduct(productoDelete.id);
+                  handleDeleteProduct(productoDelete.id);
                   toast.success("🗑️ Producto eliminado correctamente");
                 } catch {
                   toast.error("No se pudo eliminar el producto");

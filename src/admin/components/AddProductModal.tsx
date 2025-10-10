@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { Camera } from "lucide-react";
+import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import type { Product, NewProduct } from "../../types/products";
 import { categorias, etiquetas } from "../../data/options";
 import { createProduct } from "../../api/products.api";
@@ -340,59 +340,67 @@ export default function AddProductModal({
 
             {/* 🧩 Columna derecha */}
             <div className="flex flex-col gap-6">
-              {/* 📄 Archivo de especificaciones */}
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                  PDF o DOCX - Especificaciones
+              {/* 📎 Archivo de especificaciones */}
+              <div className="flex flex-col items-center w-full mt-2">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2 flex items-center gap-1">
+                  <FilePlus2 className="w-4 h-4 text-yellow-500" />
+                  Archivo de especificaciones
                 </label>
 
-                <div className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                  {specFileUrl ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">📄</span>
-                        <a
-                          href={specFileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-500 hover:underline text-sm"
+                {specFileUrl ? (
+                  <div className="flex flex-col items-center gap-2 text-sm">
+                    <div className="flex gap-3 items-center justify-center">
+                      {/* 👁️ Ver archivo */}
+                      <div className="relative group">
+                        <label
+                          onClick={() => window.open(specFileUrl, "_blank")}
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
                         >
-                          {decodeURIComponent(
-                            specFileUrl.split("/").pop() || ""
-                          )}
-                        </a>
+                          <Eye size={14} strokeWidth={1.8} />
+                          Ver
+                        </label>
+                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
+                          Abrir archivo
+                        </span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSpecFileUrl(null);
-                          toast.info(
-                            "🗑️ Archivo de especificaciones eliminado"
-                          );
-                        }}
-                        className="text-xs text-red-500 hover:underline transition"
-                      >
-                        Quitar archivo
-                      </button>
+                      {/* 🗑️ Quitar archivo */}
+                      <div className="relative group">
+                        <label
+                          onClick={() => {
+                            setSpecFileUrl(null);
+                            toast.info(
+                              "🗑️ Archivo de especificaciones eliminado"
+                            );
+                          }}
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                        >
+                          <Trash2 size={14} strokeWidth={1.8} />
+                          Quitar
+                        </label>
+                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
+                          Eliminar archivo
+                        </span>
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium text-sm rounded-md cursor-pointer transition">
-                        <span>📂 Subir archivo</span>
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          className="hidden"
-                          onChange={handleSpecUpload}
-                        />
-                      </label>
-                      <p className="text-xs text-zinc-500 mt-1 italic">
-                        Ningún archivo seleccionado
-                      </p>
-                    </>
-                  )}
-                </div>
+
+                    {/* 📄 Nombre del archivo */}
+                    <p className="text-xs text-zinc-500 truncate max-w-[230px] text-center mt-1">
+                      {decodeURIComponent(specFileUrl.split("/").pop() || "")}
+                    </p>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold cursor-pointer transition shadow-sm">
+                    <Upload size={14} strokeWidth={1.8} />
+                    Subir archivo
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleSpecUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
 
               {/* 📸 Imagen del producto */}

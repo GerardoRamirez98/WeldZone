@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { ShoppingCart, Info, Tag } from "lucide-react";
+import { ShoppingCart, FileText, Info, Tag } from "lucide-react";
 import type { Product } from "../types/products";
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -57,6 +57,46 @@ export default function ProductCard({ product }: { product: Product }) {
             Sin imagen
           </div>
         )}
+        {/* 📎 Ver ficha técnica */}
+        {product.specFileUrl && (
+          <Tooltip.Provider delayDuration={150}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <label
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(
+                      `https://docs.google.com/viewer?url=${encodeURIComponent(
+                        product.specFileUrl as string
+                      )}&embedded=true`,
+                      "_blank"
+                    );
+                  }}
+                  className="
+            absolute bottom-2 right-2 z-20 flex items-center justify-center
+            w-9 h-9 rounded-full bg-yellow-500 hover:bg-yellow-400 
+            shadow-md transition active:scale-95 cursor-pointer
+            hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
+            animate-[pulse-soft_3s_ease-in-out_infinite]
+          "
+                >
+                  <FileText className="w-4 h-4 text-white" strokeWidth={2.2} />
+                </label>
+              </Tooltip.Trigger>
+
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  side="top"
+                  sideOffset={6}
+                  className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-100 shadow-sm"
+                >
+                  Ver ficha técnica
+                  <Tooltip.Arrow className="fill-zinc-800" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        )}
       </div>
 
       {/* 📝 INFO DEL PRODUCTO */}
@@ -65,7 +105,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
             {product.nombre}
           </h3>
-          <p className="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+          <p className="mt-1 text-sm font-bold text-orange-500 dark:text-orange-400">
             ${product.precio.toLocaleString("es-MX")} MXN
           </p>
         </div>
@@ -103,30 +143,76 @@ export default function ProductCard({ product }: { product: Product }) {
                         src={product.imagenUrl}
                         alt={product.nombre}
                         className="w-full max-h-[400px] object-contain rounded-lg bg-white p-2 dark:bg-zinc-800 transition-all"
+                        loading="lazy"
                       />
                     )}
                     <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300">
                       {product.descripcion}
                     </p>
-                    <p className="mt-2 text-base font-bold text-emerald-600 dark:text-emerald-400">
+                    <p className="mt-2 text-base font-bold text-yellow-600 dark:text-yellow-400">
                       ${product.precio.toLocaleString("es-MX")} MXN
                     </p>
                   </div>
 
-                  <div className="mt-5 flex justify-end gap-2">
+                  {/* Botones inferiores del modal */}
+                  <div className="mt-5 flex flex-wrap justify-end gap-2">
+                    {/* 📎 Ver ficha técnica */}
+                    {product.specFileUrl && (
+                      <Tooltip.Provider delayDuration={150}>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <label
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  `https://docs.google.com/viewer?url=${encodeURIComponent(
+                                    product.specFileUrl as string
+                                  )}&embedded=true`,
+                                  "_blank"
+                                );
+                              }}
+                              className="
+              flex items-center gap-2 rounded-lg bg-yellow-500 px-3 py-2 
+              text-sm font-medium text-black cursor-pointer transition 
+              hover:bg-yellow-400 hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
+              animate-[pulse-soft_3s_ease-in-out_infinite]
+            "
+                            >
+                              <FileText className="w-4 h-4" strokeWidth={2.2} />
+                              Ver ficha técnica
+                            </label>
+                          </Tooltip.Trigger>
+
+                          <Tooltip.Portal>
+                            <Tooltip.Content
+                              side="top"
+                              sideOffset={6}
+                              className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-100 shadow-sm"
+                            >
+                              Abrir documento PDF
+                              <Tooltip.Arrow className="fill-zinc-800" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    )}
+
+                    {/* Botón cerrar */}
                     <Dialog.Close
                       className="
-                        rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium 
-                        text-white hover:bg-emerald-700 transition
-                      "
+      rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium 
+      text-white hover:bg-zinc-700 transition
+    "
                     >
                       Cerrar
                     </Dialog.Close>
+
+                    {/* Botón cotizar */}
                     <button
                       className="
-                        rounded-lg bg-yellow-500 px-3 py-2 text-sm font-medium 
-                        text-black hover:bg-yellow-600 transition
-                      "
+      rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium 
+      text-white hover:bg-emerald-700 transition
+    "
                     >
                       Cotizar
                     </button>

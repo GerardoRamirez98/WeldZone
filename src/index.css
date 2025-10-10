@@ -58,6 +58,38 @@ body,
   animation: spin-slow 3s linear infinite;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.18s ease-out forwards;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.18s ease-in forwards;
+}
+
 /* Estilos base */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

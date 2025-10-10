@@ -1,7 +1,7 @@
 // src/admin/components/EditProductModal.tsx
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { Camera, Upload, Trash2 } from "lucide-react";
+import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import { categorias, etiquetas } from "../../data/options";
 import type { Product } from "../../types/products";
 import { updateProduct } from "../../api/products.api";
@@ -332,117 +332,140 @@ export default function EditProductModal({
                 </select>
                 <label className="label-base">Etiqueta</label>
               </div>
+            </div>
 
-              {/* 📄 Archivo de especificaciones */}
-              <div className="space-y-2 mt-3">
-                <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-                  Archivo de especificaciones (PDF o DOCX)
+            {/* 📸 Columna derecha - Imagen y archivo de especificaciones */}
+            <div className="flex flex-col items-center justify-start gap-6">
+              {/* 🖼️ Imagen del producto */}
+              <div className="flex flex-col items-center w-full">
+                <label className="text-sm mb-2 text-zinc-700 dark:text-zinc-300 font-semibold">
+                  Imagen del producto
+                </label>
+
+                {/* 🔘 Botones de acción */}
+                <div className="flex justify-center items-center gap-3 mb-4">
+                  {/* 📸 Tomar foto */}
+                  <label className="flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500 text-white shadow-sm hover:bg-yellow-600 active:scale-[0.95] cursor-pointer transition">
+                    <Camera size={18} strokeWidth={1.8} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+
+                  {/* 📁 Subir archivo */}
+                  <label className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-700 text-white shadow-sm hover:bg-zinc-600 active:scale-[0.95] cursor-pointer transition">
+                    <Upload size={18} strokeWidth={1.8} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+
+                  {/* 🗑️ Quitar imagen */}
+                  <label
+                    onClick={() => {
+                      if (!imagenPreview) return;
+                      setImagenFile(null);
+                      setImagenPreview("");
+                      toast.info("🗑️ Imagen quitada del producto");
+                    }}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full shadow-sm active:scale-[0.95] transition cursor-pointer ${
+                      imagenPreview
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-zinc-400 text-zinc-300 cursor-not-allowed opacity-70"
+                    }`}
+                  >
+                    <Trash2 size={18} strokeWidth={1.8} />
+                  </label>
+
+                  {/* Tooltip al pasar el cursor */}
+                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
+                    Quitar
+                  </span>
+                </div>
+
+                {/* 🖼️ Vista previa */}
+                {imagenPreview ? (
+                  <img
+                    src={imagenPreview}
+                    alt="Preview"
+                    className="w-44 h-44 object-contain border-2 border-yellow-500 rounded-xl shadow-lg transition-all duration-300"
+                  />
+                ) : (
+                  <div className="w-44 h-44 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400 transition-all duration-300">
+                    <Camera size={44} strokeWidth={1.5} />
+                  </div>
+                )}
+              </div>
+
+              {/* 📎 Archivo de especificaciones */}
+              <div className="flex flex-col items-center w-full">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2 flex items-center gap-1">
+                  <FilePlus2 className="w-4 h-4 text-yellow-500" />
+                  Archivo de especificaciones
                 </label>
 
                 {specFileUrl ? (
-                  <div className="flex flex-col items-start gap-1 text-sm">
-                    <div className="flex items-center gap-3">
-                      <a
-                        href={specFileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-500 underline"
-                      >
-                        Ver archivo
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSpecFileUrl(null);
-                          toast.info(
-                            "🗑️ Archivo de especificaciones eliminado del producto"
-                          );
-                        }}
-                        className="text-red-600 underline"
-                      >
-                        Quitar
-                      </button>
+                  <div className="flex flex-col items-center gap-2 text-sm">
+                    <div className="flex gap-3 items-center justify-center">
+                      {/* 👁️ Ver archivo */}
+                      <div className="relative group">
+                        <label
+                          onClick={() => window.open(specFileUrl, "_blank")}
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                        >
+                          <Eye size={14} strokeWidth={1.8} />
+                          Ver
+                        </label>
+                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
+                          Abrir archivo
+                        </span>
+                      </div>
+
+                      {/* 🗑️ Quitar archivo */}
+                      <div className="relative group">
+                        <label
+                          onClick={() => {
+                            setSpecFileUrl(null);
+                            toast.info(
+                              "🗑️ Archivo de especificaciones eliminado del producto"
+                            );
+                          }}
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                        >
+                          <Trash2 size={14} strokeWidth={1.8} />
+                          Quitar
+                        </label>
+                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
+                          Eliminar archivo
+                        </span>
+                      </div>
                     </div>
 
-                    {/* 📎 Mostrar nombre del archivo actual */}
-                    {specFileUrl && (
-                      <p className="text-xs text-zinc-500 truncate max-w-[220px]">
-                        {decodeURIComponent(specFileUrl.split("/").pop() || "")}
-                      </p>
-                    )}
+                    {/* 📄 Nombre del archivo */}
+                    <p className="text-xs text-zinc-500 truncate max-w-[230px] text-center mt-1">
+                      {decodeURIComponent(specFileUrl.split("/").pop() || "")}
+                    </p>
                   </div>
                 ) : (
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleSpecUpload}
-                    className="text-sm text-zinc-700 dark:text-zinc-300"
-                  />
+                  <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold cursor-pointer transition shadow-sm">
+                    <Upload size={14} strokeWidth={1.8} />
+                    Subir archivo
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleSpecUpload}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
-            </div>
-
-            {/* 📸 Columna derecha - Imagen */}
-            <div className="flex flex-col items-center justify-center">
-              <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400 font-semibold">
-                Imagen del producto
-              </label>
-
-              {/* 🔘 Botones de acción minimalistas */}
-              <div className="flex justify-center items-center gap-3 mb-4">
-                {/* 📸 Tomar foto */}
-                <label className="flex items-center justify-center min-w-[40px] h-[40px] rounded-full bg-yellow-500 text-white shadow-sm hover:bg-yellow-600 active:scale-[0.95] cursor-pointer transition">
-                  <Camera size={18} strokeWidth={1.8} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </label>
-
-                {/* 📁 Subir archivo */}
-                <label className="flex items-center justify-center min-w-[40px] h-[40px] rounded-full bg-zinc-700 text-white shadow-sm hover:bg-zinc-600 active:scale-[0.95] cursor-pointer transition">
-                  <Upload size={18} strokeWidth={1.8} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </label>
-
-                {/* 🗑️ Quitar imagen */}
-                <label
-                  onClick={() => {
-                    if (!imagenPreview) return;
-                    setImagenFile(null);
-                    setImagenPreview("");
-                    toast.info("🗑️ Imagen quitada del producto");
-                  }}
-                  className={`flex items-center justify-center min-w-[40px] h-[40px] rounded-full shadow-sm active:scale-[0.95] transition ${
-                    imagenPreview
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-zinc-400 text-zinc-300 cursor-not-allowed opacity-70"
-                  }`}
-                >
-                  <Trash2 size={18} strokeWidth={1.8} />
-                </label>
-              </div>
-
-              {/* 🖼️ Vista previa */}
-              {imagenPreview ? (
-                <img
-                  src={imagenPreview}
-                  alt="Preview"
-                  className="mt-2 w-48 h-48 object-contain border-2 border-yellow-500 rounded-xl shadow-lg transition-all duration-300"
-                />
-              ) : (
-                <div className="mt-2 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400 transition-all duration-300">
-                  <Camera size={48} strokeWidth={1.5} />
-                </div>
-              )}
             </div>
           </div>
 
