@@ -9,6 +9,40 @@ import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+// 🧩 Helpers reutilizables para subida de archivo de especificaciones
+async function uploadSpecFile(
+  file: File,
+  oldUrl?: string | null
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  if (oldUrl) {
+    const oldPath = extractPathFromPublicUrl(oldUrl, "products-specs");
+    if (oldPath) formData.append("oldPath", oldPath);
+  }
+
+  const res = await fetch(`${API_URL}/upload-specs`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.url;
+}
+
+function extractPathFromPublicUrl(url: string, bucket: string) {
+  try {
+    const u = new URL(url);
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = u.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    return decodeURIComponent(u.pathname.substring(idx + marker.length));
+  } catch {
+    return null;
+  }
+}
+
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,6 +71,8 @@ export default function EditProductModal({
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState("");
 
+  const [specFileUrl, setSpecFileUrl] = useState<string | null>(null);
+
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -53,6 +89,7 @@ export default function EditProductModal({
       setCategoria(producto.categoria || "General");
       setEtiqueta(producto.etiqueta);
       setImagenPreview(producto.imagenUrl || "");
+      setSpecFileUrl(producto.specFileUrl || "");
       setImagenFile(null);
     }
   }, [producto]);
@@ -63,6 +100,21 @@ export default function EditProductModal({
     if (file) {
       setImagenFile(file);
       setImagenPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // 📄 Manejar carga del archivo de especificaciones
+  const handleSpecUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      toast.message("📤 Subiendo archivo de especificaciones...");
+      const url = await uploadSpecFile(file, specFileUrl);
+      setSpecFileUrl(url);
+      toast.success(`✅ ${file.name} subido correctamente`);
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Error al subir el archivo de especificaciones");
     }
   };
 
@@ -94,7 +146,23 @@ export default function EditProductModal({
         categoria,
         etiqueta,
         imagenUrl,
+        specFileUrl,
       };
+
+      if (!nombre) {
+        toast.warning("⚠️ El nombre es obligatorio");
+        return;
+      }
+
+      if (precio <= 0) {
+        toast.warning("⚠️ El precio debe ser mayor a 0");
+        return;
+      }
+
+      if (stock < 0) {
+        toast.warning("⚠️ El stock no puede ser negativo");
+        return;
+      }
 
       const actualizadoDB = await updateProduct(producto.id, actualizado);
       onUpdate(actualizadoDB);
@@ -263,6 +331,54 @@ export default function EditProductModal({
                   ))}
                 </select>
                 <label className="label-base">Etiqueta</label>
+              </div>
+
+              {/* 📄 Archivo de especificaciones */}
+              <div className="space-y-2 mt-3">
+                <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                  Archivo de especificaciones (PDF o DOCX)
+                </label>
+
+                {specFileUrl ? (
+                  <div className="flex flex-col items-start gap-1 text-sm">
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={specFileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-500 underline"
+                      >
+                        Ver archivo
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSpecFileUrl(null);
+                          toast.info(
+                            "🗑️ Archivo de especificaciones eliminado del producto"
+                          );
+                        }}
+                        className="text-red-600 underline"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+
+                    {/* 📎 Mostrar nombre del archivo actual */}
+                    {specFileUrl && (
+                      <p className="text-xs text-zinc-500 truncate max-w-[220px]">
+                        {decodeURIComponent(specFileUrl.split("/").pop() || "")}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleSpecUpload}
+                    className="text-sm text-zinc-700 dark:text-zinc-300"
+                  />
+                )}
               </div>
             </div>
 

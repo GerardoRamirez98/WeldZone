@@ -14,6 +14,41 @@ interface AddProductModalProps {
   onAdd: (producto: Product) => void;
 }
 
+// 📦 1. Función para subir el archivo PDF/DOCX a tu backend
+async function uploadSpecFile(
+  file: File,
+  oldUrl?: string | null
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  if (oldUrl) {
+    const oldPath = extractPathFromPublicUrl(oldUrl, "products-specs");
+    if (oldPath) formData.append("oldPath", oldPath);
+  }
+
+  const res = await fetch(`${API_URL}/upload-specs`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.url;
+}
+
+// 📎 2. Helper para obtener el path interno desde la URL pública de Supabase
+function extractPathFromPublicUrl(url: string, bucket: string) {
+  try {
+    const u = new URL(url);
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = u.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    return decodeURIComponent(u.pathname.substring(idx + marker.length));
+  } catch {
+    return null;
+  }
+}
+
 export default function AddProductModal({
   isOpen,
   onClose,
@@ -31,8 +66,13 @@ export default function AddProductModal({
 
   const [categoria, setCategoria] = useState("General");
   const [etiqueta, setEtiqueta] = useState<"Nuevo" | "Oferta" | undefined>();
+  // 📸 Estado para imagen
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+
+  // 📄 Estado para archivo de especificaciones
+  const [specFileUrl, setSpecFileUrl] = useState<string | null>(null);
+
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   // 🔄 Resetear formulario al abrir el modal
@@ -45,6 +85,7 @@ export default function AddProductModal({
     setEtiqueta(undefined);
     setImagenFile(null);
     setImagenPreview(null);
+    setSpecFileUrl(null);
   };
 
   useEffect(() => {
@@ -61,6 +102,21 @@ export default function AddProductModal({
     }
   };
 
+  // 📄 Vista previa y carga de archivo de especificaciones
+  const handleSpecUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      toast.message("📤 Subiendo archivo de especificaciones...");
+      const url = await uploadSpecFile(file);
+      setSpecFileUrl(url);
+      toast.success(`✅ ${file.name} subido correctamente`); // 👈 muestra el nombre del archivo
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Error al subir archivo de especificaciones");
+    }
+  };
+
   // 📤 Crear producto con indicador de carga
   const handleSubmit = async () => {
     if (!nombre) {
@@ -68,7 +124,16 @@ export default function AddProductModal({
       return;
     }
 
-    // Mostramos loading toast mientras sube
+    if (precio <= 0) {
+      toast.warning("⚠️ El precio debe ser mayor a 0");
+      return;
+    }
+
+    if (stock < 0) {
+      toast.warning("⚠️ El stock no puede ser negativo");
+      return;
+    }
+
     const toastId = toast.loading("Subiendo producto...");
 
     try {
@@ -101,6 +166,7 @@ export default function AddProductModal({
         categoria,
         etiqueta,
         imagenUrl,
+        specFileUrl,
         estado: "Activo",
       };
 
@@ -135,8 +201,9 @@ export default function AddProductModal({
 
           {/* 📋 Formulario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Columna izquierda */}
+            {/* 🧱 Columna izquierda */}
             <div className="space-y-5">
+              {/* Nombre */}
               <div className="relative">
                 <input
                   type="text"
@@ -148,6 +215,7 @@ export default function AddProductModal({
                 <label className="label-base">Nombre</label>
               </div>
 
+              {/* Descripción */}
               <div className="relative">
                 <textarea
                   value={descripcion}
@@ -161,42 +229,34 @@ export default function AddProductModal({
 
               {/* 💲 Precio y Stock */}
               <div className="grid grid-cols-2 gap-4 mt-4">
-                {/* 💰 PRECIO */}
+                {/* Precio */}
                 <div className="relative">
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={precioInput} // 👈 usamos un estado temporal para texto
+                    value={precioInput}
                     onChange={(e) => {
-                      const value = e.target.value.replace(",", "."); // corrige comas
-                      // Permitimos vacío, números, o un punto decimal
-                      if (/^[0-9]*[.,]?[0-9]*$/.test(value)) {
+                      const value = e.target.value.replace(",", ".");
+                      if (/^[0-9]*[.,]?[0-9]*$/.test(value))
                         setPrecioInput(value);
-                      }
                     }}
                     onBlur={() => {
-                      // Convertimos a número limpio
                       const num = parseFloat(precioInput);
                       if (isNaN(num)) {
                         setPrecio(0);
                         setPrecioInput("0.00");
                         return;
                       }
-
-                      // Evita negativos y redondea
                       const positive = Math.abs(num);
-                      setPrecio(positive); // valor numérico real
+                      setPrecio(positive);
                       setPrecioInput(
                         positive.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })
-                      ); // valor formateado
+                      );
                     }}
-                    onFocus={() => {
-                      // Al enfocar, quitamos separadores para que sea editable cómodamente
-                      setPrecioInput(precio.toString());
-                    }}
+                    onFocus={() => setPrecioInput(precio.toString())}
                     onKeyDown={(e) => {
                       if (["e", "E", "+", "-"].includes(e.key))
                         e.preventDefault();
@@ -207,17 +267,15 @@ export default function AddProductModal({
                   <label className="label-base">Precio</label>
                 </div>
 
-                {/* 📦 STOCK */}
+                {/* Stock */}
                 <div className="relative">
                   <input
                     type="text"
                     inputMode="numeric"
                     value={stockInput}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, ""); // elimina todo lo que no sea dígito
-                      if (/^\d*$/.test(value)) {
-                        setStockInput(value);
-                      }
+                      const value = e.target.value.replace(/\D/g, "");
+                      if (/^\d*$/.test(value)) setStockInput(value);
                     }}
                     onBlur={() => {
                       const num = parseInt(stockInput, 10);
@@ -226,17 +284,11 @@ export default function AddProductModal({
                         setStockInput("0");
                         return;
                       }
-
                       const positive = Math.abs(num);
                       setStock(positive);
-                      setStockInput(
-                        positive.toLocaleString("en-US") // 👈 separador de miles
-                      );
+                      setStockInput(positive.toLocaleString("en-US"));
                     }}
-                    onFocus={() => {
-                      // Quita formato al volver a editar
-                      setStockInput(stock.toString());
-                    }}
+                    onFocus={() => setStockInput(stock.toString())}
                     onKeyDown={(e) => {
                       if (["e", "E", "+", "-", "."].includes(e.key))
                         e.preventDefault();
@@ -248,6 +300,7 @@ export default function AddProductModal({
                 </div>
               </div>
 
+              {/* Categoría */}
               <div className="relative">
                 <select
                   value={categoria}
@@ -263,6 +316,7 @@ export default function AddProductModal({
                 <label className="label-base">Categoría</label>
               </div>
 
+              {/* Etiqueta */}
               <div className="relative">
                 <select
                   value={etiqueta || ""}
@@ -284,50 +338,108 @@ export default function AddProductModal({
               </div>
             </div>
 
-            {/* 📸 Columna derecha - Imagen */}
-            <div className="flex flex-col items-center justify-center">
-              <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400 font-semibold">
-                Imagen del producto
-              </label>
-
-              <div className="flex flex-wrap justify-center gap-2 mb-3">
-                {/* Botón Tomar foto */}
-                <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-yellow-500 text-black text-xs font-medium hover:bg-yellow-600 cursor-pointer transition">
-                  <Camera size={14} strokeWidth={1.5} />
-                  <span>Tomar</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
+            {/* 🧩 Columna derecha */}
+            <div className="flex flex-col gap-6">
+              {/* 📄 Archivo de especificaciones */}
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                  PDF o DOCX - Especificaciones
                 </label>
 
-                {/* Botón Subir archivo */}
-                <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-zinc-700 text-white text-xs font-medium hover:bg-zinc-600 cursor-pointer transition">
-                  <span>📁 Subir</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </label>
+                <div className="bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                  {specFileUrl ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">📄</span>
+                        <a
+                          href={specFileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-500 hover:underline text-sm"
+                        >
+                          {decodeURIComponent(
+                            specFileUrl.split("/").pop() || ""
+                          )}
+                        </a>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSpecFileUrl(null);
+                          toast.info(
+                            "🗑️ Archivo de especificaciones eliminado"
+                          );
+                        }}
+                        className="text-xs text-red-500 hover:underline transition"
+                      >
+                        Quitar archivo
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium text-sm rounded-md cursor-pointer transition">
+                        <span>📂 Subir archivo</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          className="hidden"
+                          onChange={handleSpecUpload}
+                        />
+                      </label>
+                      <p className="text-xs text-zinc-500 mt-1 italic">
+                        Ningún archivo seleccionado
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Vista previa */}
-              {imagenPreview ? (
-                <img
-                  src={imagenPreview}
-                  alt="Preview"
-                  className="mt-2 w-48 h-48 object-contain border-2 border-yellow-500 rounded-xl shadow-lg"
-                />
-              ) : (
-                <div className="mt-2 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400">
-                  <Camera size={48} strokeWidth={1.5} />
+              {/* 📸 Imagen del producto */}
+              <div className="flex flex-col items-center justify-center">
+                <label className="text-sm mb-2 text-zinc-600 dark:text-zinc-400 font-semibold">
+                  Imagen del producto
+                </label>
+
+                <div className="flex flex-wrap justify-center gap-2 mb-3">
+                  {/* Botón Tomar foto */}
+                  <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-yellow-500 text-black text-xs font-medium hover:bg-yellow-600 cursor-pointer transition">
+                    <Camera size={14} strokeWidth={1.5} />
+                    <span>Tomar</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+
+                  {/* Botón Subir archivo */}
+                  <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-zinc-700 text-white text-xs font-medium hover:bg-zinc-600 cursor-pointer transition">
+                    <span>📁 Subir</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
                 </div>
-              )}
+
+                {/* Vista previa */}
+                {imagenPreview ? (
+                  <img
+                    src={imagenPreview}
+                    alt="Preview"
+                    className="mt-2 w-48 h-48 object-contain border-2 border-yellow-500 rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <div className="mt-2 w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400">
+                    <Camera size={48} strokeWidth={1.5} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
