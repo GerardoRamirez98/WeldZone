@@ -28,7 +28,9 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"]
-    }
+    },
+    /* 🚫 Silenciar deprecaciones TS6 */
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src"]
 }
