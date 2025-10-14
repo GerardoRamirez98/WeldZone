@@ -10,22 +10,27 @@ export default function CartModal() {
 
   const whatsappNumber = config?.whatsapp?.trim();
 
-  const mensaje = encodeURIComponent(
-    `🛒 *Pedido desde WeldZone:*\n\n` +
-      cart
-        .map(
-          (p, i) =>
-            `${i + 1}. *${p.nombre}* — Cantidad: ${p.cantidad} — Subtotal: $${(
-              p.precio * p.cantidad
-            ).toLocaleString("es-MX")} MXN`
-        )
-        .join("\n") +
-      `\n\n💰 Total: $${cart
-        .reduce((acc, p) => acc + p.precio * p.cantidad, 0)
-        .toLocaleString(
-          "es-MX"
-        )} MXN\n\n👉 Catálogo: https://weldzone.vercel.app/catalogo`
-  );
+  const mensaje =
+    `🛒 *¡Nuevo pedido desde WeldZone!*\n\n` +
+    cart
+      .map(
+        (p, i) =>
+          `🧰 *${i + 1}. ${p.nombre.toUpperCase()}*\n` +
+          `💵 Precio: $${p.precio.toLocaleString("es-MX")} MXN\n` +
+          `📦 Cantidad: ${p.cantidad}\n` +
+          `💰 Subtotal: $${(p.precio * p.cantidad).toLocaleString("es-MX")} MXN`
+      )
+      .join("\n\n") +
+    `\n\n--------------------------\n` +
+    `💸 *Total a pagar:* $${cart
+      .reduce((acc, p) => acc + p.precio * p.cantidad, 0)
+      .toLocaleString("es-MX")} MXN\n` +
+    `--------------------------\n\n` +
+    `🚚 *Método de entrega:* A convenir con el vendedor\n` +
+    `📞 *Atención personalizada vía WhatsApp*\n\n` +
+    `🧾 *Catálogo completo:* https://weldzone.vercel.app/catalogo\n\n` +
+    `📲 *Por favor envíame tu nombre y dirección para confirmar tu pedido.*\n\n` +
+    `🔧 _Mensaje automático generado desde WeldZone_`;
 
   const handleSend = () => {
     if (cart.length === 0) {
@@ -37,8 +42,14 @@ export default function CartModal() {
       return;
     }
 
-    // ✅ Abrir WhatsApp con el número obtenido del backend
-    window.open(`https://wa.me/${whatsappNumber}?text=${mensaje}`, "_blank");
+    // ✅ Usa la API larga (mantiene emojis y saltos)
+    window.open(
+      `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(
+        mensaje
+      )}`,
+      "_blank"
+    );
+
     clearCart();
   };
 
