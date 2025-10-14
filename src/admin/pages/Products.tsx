@@ -61,21 +61,17 @@ export default function Products() {
                 dark:border-zinc-800 dark:bg-zinc-900
                 ${isAgotado ? "opacity-60 grayscale cursor-not-allowed" : ""}`}
             >
-              {/* 🏷️ Etiqueta */}
-              {p.etiqueta && (
+              {/* 🏷️ Etiqueta (dinámica desde backend) */}
+              {p.etiqueta?.nombre && (
                 <div
-                  className={`absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md
-                    transition-transform duration-300 group-hover:scale-110 animate-[pulse-soft_3s_ease-in-out_infinite]
-                    ${
-                      p.etiqueta === "Nuevo"
-                        ? "bg-gradient-to-r from-blue-500 to-blue-700"
-                        : p.etiqueta === "Oferta"
-                        ? "bg-gradient-to-r from-red-500 to-red-700"
-                        : "bg-zinc-600"
-                    }`}
+                  className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md
+                  transition-transform duration-300 group-hover:scale-110 animate-[pulse-soft_3s_ease-in-out_infinite]"
+                  style={{
+                    backgroundColor: p.etiqueta?.color || "#666",
+                  }}
                 >
                   <Tag className="h-3 w-3" />
-                  {p.etiqueta}
+                  {p.etiqueta?.nombre}
                 </div>
               )}
 
@@ -118,13 +114,11 @@ export default function Products() {
                               "_blank"
                             );
                           }}
-                          className="
-            absolute bottom-2 right-2 z-20 flex items-center justify-center
-            w-9 h-9 rounded-full bg-yellow-500 hover:bg-yellow-400 
-            shadow-md transition active:scale-95 cursor-pointer
-            hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
-            animate-[pulse-soft_3s_ease-in-out_infinite]
-          "
+                          className="absolute bottom-2 right-2 z-20 flex items-center justify-center
+                          w-9 h-9 rounded-full bg-yellow-500 hover:bg-yellow-400 
+                          shadow-md transition active:scale-95 cursor-pointer
+                          hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
+                          animate-[pulse-soft_3s_ease-in-out_infinite]"
                         >
                           <FileText
                             className="w-4 h-4 text-white"
@@ -139,8 +133,8 @@ export default function Products() {
                           side="top"
                           sideOffset={6}
                           className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-100 shadow-sm 
-                     data-[state=delayed-open]:animate-fadeIn 
-                     data-[state=closed]:animate-fadeOut"
+                          data-[state=delayed-open]:animate-fadeIn 
+                          data-[state=closed]:animate-fadeOut"
                         >
                           Ver ficha técnica
                           <Tooltip.Arrow className="fill-zinc-800" />

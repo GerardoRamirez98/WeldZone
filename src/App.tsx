@@ -31,9 +31,19 @@ export default function App() {
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } =
         document.documentElement;
-      const scrolledToBottom = scrollTop + clientHeight >= scrollHeight - 50;
-      setShowFooter(scrolledToBottom);
+
+      // ✅ Mostrar footer solo cuando estamos cerca del final
+      const nearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+
+      // ✅ Ocultar cuando subimos
+      setShowFooter(nearBottom);
     };
+
+    // ✅ Mostrar el footer automáticamente si la página es muy corta
+    const { scrollHeight, clientHeight } = document.documentElement;
+    if (scrollHeight <= clientHeight + 50) {
+      setShowFooter(true);
+    }
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);

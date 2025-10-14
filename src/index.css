@@ -90,6 +90,12 @@ body,
   animation: fadeOut 0.18s ease-in forwards;
 }
 
+/* 🔅 Cuando el modal está abierto, atenúa todo el catálogo */
+body.modal-open .group {
+  filter: brightness(0.5) saturate(0.8);
+  transition: filter 0.3s ease;
+}
+
 /* Estilos base */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

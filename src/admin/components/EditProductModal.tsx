@@ -2,26 +2,23 @@
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
-import { categorias, etiquetas } from "../../data/options";
 import type { Product } from "../../types/products";
 import { updateProduct } from "../../api/products.api";
 import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-// 🧩 Helpers reutilizables para subida de archivo de especificaciones
+// 🧩 Helper para subir archivo de especificaciones
 async function uploadSpecFile(
   file: File,
   oldUrl?: string | null
 ): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-
   if (oldUrl) {
     const oldPath = extractPathFromPublicUrl(oldUrl, "products-specs");
     if (oldPath) formData.append("oldPath", oldPath);
   }
-
   const res = await fetch(`${API_URL}/upload-specs`, {
     method: "POST",
     body: formData,
@@ -64,13 +61,13 @@ export default function EditProductModal({
   const [precioInput, setPrecioInput] = useState("0.00");
   const [stock, setStock] = useState(0);
   const [stockInput, setStockInput] = useState("0");
-  const [categoria, setCategoria] = useState("General");
-  const [etiqueta, setEtiqueta] = useState<
-    "Nuevo" | "Oferta" | "Descontinuado" | undefined
-  >();
+
+  // 🔹 Relacionales
+  const [categoriaId, setCategoriaId] = useState<number | null>(null);
+  const [etiquetaId, setEtiquetaId] = useState<number | null>(null);
+
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState("");
-
   const [specFileUrl, setSpecFileUrl] = useState<string | null>(null);
 
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
@@ -86,10 +83,13 @@ export default function EditProductModal({
       setPrecioInput(producto.precio.toFixed(2));
       setStock(producto.stock);
       setStockInput(producto.stock.toString());
-      setCategoria(producto.categoria || "General");
-      setEtiqueta(producto.etiqueta);
+
+      // ⚙️ Cargar relaciones (maneja objeto o ID directo)
+      setCategoriaId(producto.categoriaId ?? producto.categoria?.id ?? null);
+      setEtiquetaId(producto.etiquetaId ?? producto.etiqueta?.id ?? null);
+
       setImagenPreview(producto.imagenUrl || "");
-      setSpecFileUrl(producto.specFileUrl || "");
+      setSpecFileUrl(producto.specFileUrl || null);
       setImagenFile(null);
     }
   }, [producto]);
@@ -100,6 +100,7 @@ export default function EditProductModal({
     if (file) {
       setImagenFile(file);
       setImagenPreview(URL.createObjectURL(file));
+      toast.success("📸 Imagen cargada correctamente");
     }
   };
 
@@ -123,16 +124,13 @@ export default function EditProductModal({
     try {
       let imagenUrl = producto.imagenUrl;
 
-      // 🖼️ Subir nueva imagen si hay
       if (imagenFile) {
         const formData = new FormData();
         formData.append("file", imagenFile);
-
         const res = await fetch(`${API_URL}/upload`, {
           method: "POST",
           body: formData,
         });
-
         if (!res.ok) throw new Error("Error al subir la nueva imagen");
         const data = await res.json();
         imagenUrl = data.url;
@@ -143,8 +141,8 @@ export default function EditProductModal({
         descripcion,
         precio,
         stock,
-        categoria,
-        etiqueta,
+        categoriaId: categoriaId ?? undefined,
+        etiquetaId: etiquetaId ?? undefined,
         imagenUrl,
         specFileUrl,
       };
@@ -153,12 +151,10 @@ export default function EditProductModal({
         toast.warning("⚠️ El nombre es obligatorio");
         return;
       }
-
       if (precio <= 0) {
         toast.warning("⚠️ El precio debe ser mayor a 0");
         return;
       }
-
       if (stock < 0) {
         toast.warning("⚠️ El stock no puede ser negativo");
         return;
@@ -294,80 +290,49 @@ export default function EditProductModal({
 
               {/* Categoría */}
               <div className="relative">
-                <select
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
-                  className="select-base peer"
-                >
-                  {categorias.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <label className="label-base">Categoría</label>
+                <input
+                  type="number"
+                  value={categoriaId ?? ""}
+                  onChange={(e) => setCategoriaId(Number(e.target.value))}
+                  className="input-base peer"
+                  placeholder=" "
+                />
+                <label className="label-base">ID de categoría</label>
               </div>
 
               {/* Etiqueta */}
               <div className="relative">
-                <select
-                  value={etiqueta || ""}
-                  onChange={(e) =>
-                    setEtiqueta(
-                      e.target.value as
-                        | "Nuevo"
-                        | "Oferta"
-                        | "Descontinuado"
-                        | undefined
-                    )
-                  }
-                  className="select-base peer"
-                >
-                  <option value="">Sin etiqueta</option>
-                  {etiquetas.map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
-                <label className="label-base">Etiqueta</label>
+                <input
+                  type="number"
+                  value={etiquetaId ?? ""}
+                  onChange={(e) => setEtiquetaId(Number(e.target.value))}
+                  className="input-base peer"
+                  placeholder=" "
+                />
+                <label className="label-base">ID de etiqueta</label>
               </div>
             </div>
 
-            {/* 📸 Columna derecha - Imagen y archivo de especificaciones */}
+            {/* 📸 Columna derecha */}
             <div className="flex flex-col items-center justify-start gap-6">
-              {/* 🖼️ Imagen del producto */}
+              {/* Imagen del producto */}
               <div className="flex flex-col items-center w-full">
                 <label className="text-sm mb-2 text-zinc-700 dark:text-zinc-300 font-semibold">
                   Imagen del producto
                 </label>
 
-                {/* 🔘 Botones de acción */}
+                {/* Botones */}
                 <div className="flex justify-center items-center gap-3 mb-4">
-                  {/* 📸 Tomar foto */}
-                  <label className="flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500 text-white shadow-sm hover:bg-yellow-600 active:scale-[0.95] cursor-pointer transition">
+                  <label className="flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer transition">
                     <Camera size={18} strokeWidth={1.8} />
                     <input
                       type="file"
                       accept="image/*"
-                      capture="environment"
                       className="hidden"
                       onChange={handleImageUpload}
                     />
                   </label>
 
-                  {/* 📁 Subir archivo */}
-                  <label className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-700 text-white shadow-sm hover:bg-zinc-600 active:scale-[0.95] cursor-pointer transition">
-                    <Upload size={18} strokeWidth={1.8} />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
-
-                  {/* 🗑️ Quitar imagen */}
                   <label
                     onClick={() => {
                       if (!imagenPreview) return;
@@ -383,28 +348,23 @@ export default function EditProductModal({
                   >
                     <Trash2 size={18} strokeWidth={1.8} />
                   </label>
-
-                  {/* Tooltip al pasar el cursor */}
-                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
-                    Quitar
-                  </span>
                 </div>
 
-                {/* 🖼️ Vista previa */}
+                {/* Vista previa */}
                 {imagenPreview ? (
                   <img
                     src={imagenPreview}
                     alt="Preview"
-                    className="w-44 h-44 object-contain border-2 border-yellow-500 rounded-xl shadow-lg transition-all duration-300"
+                    className="w-44 h-44 object-contain border-2 border-yellow-500 rounded-xl shadow-lg"
                   />
                 ) : (
-                  <div className="w-44 h-44 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400 transition-all duration-300">
+                  <div className="w-44 h-44 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 border-2 border-dashed border-zinc-400 rounded-xl text-zinc-400">
                     <Camera size={44} strokeWidth={1.5} />
                   </div>
                 )}
               </div>
 
-              {/* 📎 Archivo de especificaciones */}
+              {/* Archivo de especificaciones */}
               <div className="flex flex-col items-center w-full">
                 <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 mb-2 flex items-center gap-1">
                   <FilePlus2 className="w-4 h-4 text-yellow-500" />
@@ -414,41 +374,24 @@ export default function EditProductModal({
                 {specFileUrl ? (
                   <div className="flex flex-col items-center gap-2 text-sm">
                     <div className="flex gap-3 items-center justify-center">
-                      {/* 👁️ Ver archivo */}
-                      <div className="relative group">
-                        <label
-                          onClick={() => window.open(specFileUrl, "_blank")}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
-                        >
-                          <Eye size={14} strokeWidth={1.8} />
-                          Ver
-                        </label>
-                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
-                          Abrir archivo
-                        </span>
-                      </div>
-
-                      {/* 🗑️ Quitar archivo */}
-                      <div className="relative group">
-                        <label
-                          onClick={() => {
-                            setSpecFileUrl(null);
-                            toast.info(
-                              "🗑️ Archivo de especificaciones eliminado del producto"
-                            );
-                          }}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
-                        >
-                          <Trash2 size={14} strokeWidth={1.8} />
-                          Quitar
-                        </label>
-                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
-                          Eliminar archivo
-                        </span>
-                      </div>
+                      <label
+                        onClick={() => window.open(specFileUrl, "_blank")}
+                        className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                      >
+                        <Eye size={14} strokeWidth={1.8} />
+                        Ver
+                      </label>
+                      <label
+                        onClick={() => {
+                          setSpecFileUrl(null);
+                          toast.info("🗑️ Archivo eliminado");
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                      >
+                        <Trash2 size={14} strokeWidth={1.8} />
+                        Quitar
+                      </label>
                     </div>
-
-                    {/* 📄 Nombre del archivo */}
                     <p className="text-xs text-zinc-500 truncate max-w-[230px] text-center mt-1">
                       {decodeURIComponent(specFileUrl.split("/").pop() || "")}
                     </p>
@@ -479,13 +422,13 @@ export default function EditProductModal({
             </button>
             <div className="flex gap-2 ml-auto">
               <button
-                className="px-4 py-2 rounded-lg bg-zinc-700 text-white"
+                className="px-4 py-2 rounded-lg bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 transition"
                 onClick={() => setShowCancelConfirm(true)}
               >
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-yellow-500 text-black font-semibold"
+                className="px-4 py-2 rounded-lg bg-yellow-500 text-black font-semibold hover:bg-yellow-600 transition"
                 onClick={() => setShowSaveConfirm(true)}
               >
                 Guardar cambios
@@ -495,29 +438,29 @@ export default function EditProductModal({
         </div>
       </Dialog>
 
-      {/* Confirmaciones */}
+      {/* Confirmaciones (corregidas para texto visible en ambos modos) */}
       <Dialog
         open={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-zinc-100">
+        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4">
             ¿Cancelar edición?
           </Dialog.Title>
-          <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+          <p className="text-center text-sm mb-6">
             Los cambios no guardados se perderán.
           </p>
           <div className="flex justify-center gap-3">
             <button
-              className="px-4 py-2 bg-zinc-700 text-white rounded-lg"
+              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
               onClick={() => setShowCancelConfirm(false)}
             >
               Volver
             </button>
             <button
-              className="px-4 py-2 bg-red-500 text-white rounded-lg"
+              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-semibold transition"
               onClick={() => {
                 setShowCancelConfirm(false);
                 onClose();
@@ -535,22 +478,22 @@ export default function EditProductModal({
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-zinc-100">
+        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4">
             ¿Guardar cambios?
           </Dialog.Title>
-          <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
-            Se sobrescribirá la información de este producto.
+          <p className="text-center text-sm mb-6">
+            Se sobrescribirá la información del producto.
           </p>
           <div className="flex justify-center gap-3">
             <button
-              className="px-4 py-2 bg-zinc-700 text-white rounded-lg"
+              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
               onClick={() => setShowSaveConfirm(false)}
             >
               Cancelar
             </button>
             <button
-              className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold"
+              className="px-4 py-2 bg-yellow-500 text-black hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 rounded-lg font-semibold transition"
               onClick={handleUpdate}
             >
               Sí, guardar
@@ -565,26 +508,26 @@ export default function EditProductModal({
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600">
+        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600 dark:text-red-400">
             ¿Eliminar producto?
           </Dialog.Title>
-          <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+          <p className="text-center text-sm mb-6">
             Estás a punto de eliminar{" "}
-            <span className="font-semibold text-red-500">
+            <span className="font-semibold text-red-500 dark:text-red-400">
               {producto?.nombre}
             </span>
             . Esta acción no se puede deshacer.
           </p>
           <div className="flex justify-center gap-3">
             <button
-              className="px-4 py-2 bg-zinc-700 text-white rounded-lg"
+              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
               onClick={() => setShowDeleteConfirm(false)}
             >
               Cancelar
             </button>
             <button
-              className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold"
+              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-semibold transition"
               onClick={() => {
                 onDelete(producto.id);
                 setShowDeleteConfirm(false);

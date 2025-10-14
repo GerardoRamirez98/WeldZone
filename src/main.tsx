@@ -4,20 +4,24 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthProvider";
-import { Toaster } from "sonner"; // ✅ Importamos el Toaster global
+import { CartProvider } from "./context/CartContext"; // 👈 nuevo
+import { Toaster } from "sonner";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
-        {/* ✅ Agregamos Toaster para notificaciones globales */}
-        <Toaster
-          richColors
-          theme="system" // adapta automáticamente modo claro/oscuro
-          position="bottom-right" // esquina inferior derecha
-          expand={false} // muestra uno a la vez (opcional)
-        />
+        <CartProvider>
+          {" "}
+          {/* 👈 envolvemos App */}
+          <App />
+          <Toaster
+            richColors
+            theme="system"
+            position="bottom-right"
+            expand={false}
+          />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>

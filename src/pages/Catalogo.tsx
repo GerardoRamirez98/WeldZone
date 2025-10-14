@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import type { Product } from "@/types/products";
+import CartFloatingButton from "../components/CartFloatingButton";
 
 export default function Catalogo() {
   const [q, setQ] = useState("");
@@ -27,7 +28,7 @@ export default function Catalogo() {
   }
 
   return (
-    <main className="container py-6">
+    <main className="container py-6 relative">
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Catálogo</h1>
@@ -46,11 +47,15 @@ export default function Catalogo() {
         />
       </div>
 
+      {/* 🧱 Grilla de productos */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}
       </section>
+
+      {/* 🛒 Botón flotante del carrito */}
+      <CartFloatingButton />
     </main>
   );
 }

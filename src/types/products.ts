@@ -1,17 +1,32 @@
+// src/types/products.ts
+
 export interface Product {
-  id: number; // ID único del producto
-  nombre: string; // Nombre del producto
-  descripcion: string; // Descripción del producto
-  precio: number; // Precio en USD
-  stock: number; // Cantidad en stock
-  categoria: string; // Categoría del producto
-  etiqueta?: "Nuevo" | "Oferta" | "Descontinuado"; // Etiqueta opcional
-  imagenUrl?: string; // URL de la imagen (opcional)
-  specFileUrl?: string | null; // URL del archivo de especificaciones (opcional)
-  estado?: string; // Estado del producto (opcional)
-  createdAt?: string; // Fecha de creación (opcional)
-  updatedAt?: string; // Fecha de última actualización (opcional)
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  stock: number;
+
+  // 🔹 Relaciones dinámicas (según tu modelo Prisma)
+  categoriaId?: number | null; // FK hacia Categoria
+  categoria?: {
+    id: number;
+    nombre: string;
+  } | null;
+
+  etiquetaId?: number | null; // FK hacia Etiqueta
+  etiqueta?: {
+    id: number;
+    nombre: string;
+    color: string;
+  } | null;
+
+  imagenUrl?: string;
+  specFileUrl?: string | null;
+  estado?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// ✅ Tipo especial para crear nuevos productos (sin id)
+// ✅ Tipo para crear nuevos productos (sin ID obligatorio)
 export type NewProduct = Omit<Product, "id">;

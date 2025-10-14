@@ -2,11 +2,21 @@ import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import type { Product, NewProduct } from "../../types/products";
-import { categorias, etiquetas } from "../../data/options";
 import { createProduct } from "../../api/products.api";
 import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+interface Categoria {
+  id: number;
+  nombre: string;
+}
+
+interface Etiqueta {
+  id: number;
+  nombre: string;
+  color: string;
+}
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -14,19 +24,10 @@ interface AddProductModalProps {
   onAdd: (producto: Product) => void;
 }
 
-// 📦 1. Función para subir el archivo PDF/DOCX a tu backend
-async function uploadSpecFile(
-  file: File,
-  oldUrl?: string | null
-): Promise<string> {
+// 📦 Subir archivo de especificaciones al backend
+async function uploadSpecFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-
-  if (oldUrl) {
-    const oldPath = extractPathFromPublicUrl(oldUrl, "products-specs");
-    if (oldPath) formData.append("oldPath", oldPath);
-  }
-
   const res = await fetch(`${API_URL}/upload-specs`, {
     method: "POST",
     body: formData,
@@ -34,19 +35,6 @@ async function uploadSpecFile(
   if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
   return data.url;
-}
-
-// 📎 2. Helper para obtener el path interno desde la URL pública de Supabase
-function extractPathFromPublicUrl(url: string, bucket: string) {
-  try {
-    const u = new URL(url);
-    const marker = `/storage/v1/object/public/${bucket}/`;
-    const idx = u.pathname.indexOf(marker);
-    if (idx === -1) return null;
-    return decodeURIComponent(u.pathname.substring(idx + marker.length));
-  } catch {
-    return null;
-  }
 }
 
 export default function AddProductModal({
@@ -57,42 +45,37 @@ export default function AddProductModal({
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState<number>(0);
-
-  const [precioInput, setPrecioInput] = useState(precio.toString());
-
   const [stock, setStock] = useState<number>(0);
+  const [categoriaId, setCategoriaId] = useState<number | null>(null);
+  const [etiquetaId, setEtiquetaId] = useState<number | null>(null);
 
-  const [stockInput, setStockInput] = useState(stock.toString());
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
 
-  const [categoria, setCategoria] = useState("General");
-  const [etiqueta, setEtiqueta] = useState<"Nuevo" | "Oferta" | undefined>();
-  // 📸 Estado para imagen
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
-
-  // 📄 Estado para archivo de especificaciones
   const [specFileUrl, setSpecFileUrl] = useState<string | null>(null);
-
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
-  // 🔄 Resetear formulario al abrir el modal
-  const resetForm = () => {
-    setNombre("");
-    setDescripcion("");
-    setPrecio(0);
-    setStock(0);
-    setCategoria("General");
-    setEtiqueta(undefined);
-    setImagenFile(null);
-    setImagenPreview(null);
-    setSpecFileUrl(null);
-  };
-
+  // 🚀 Cargar categorías y etiquetas dinámicamente
   useEffect(() => {
-    if (isOpen) resetForm();
+    if (!isOpen) return;
+    const fetchData = async () => {
+      try {
+        const [cats, tags] = await Promise.all([
+          fetch(`${API_URL}/config/categorias`).then((r) => r.json()),
+          fetch(`${API_URL}/config/etiquetas`).then((r) => r.json()),
+        ]);
+        setCategorias(cats);
+        setEtiquetas(tags);
+      } catch {
+        toast.error("❌ No se pudieron cargar categorías o etiquetas");
+      }
+    };
+    fetchData();
   }, [isOpen]);
 
-  // 📸 Vista previa y carga de imagen
+  // 📸 Subir imagen
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -102,7 +85,7 @@ export default function AddProductModal({
     }
   };
 
-  // 📄 Vista previa y carga de archivo de especificaciones
+  // 📄 Subir archivo de especificaciones
   const handleSpecUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -110,84 +93,59 @@ export default function AddProductModal({
       toast.message("📤 Subiendo archivo de especificaciones...");
       const url = await uploadSpecFile(file);
       setSpecFileUrl(url);
-      toast.success(`✅ ${file.name} subido correctamente`); // 👈 muestra el nombre del archivo
-    } catch (err) {
-      console.error(err);
+      toast.success(`✅ ${file.name} subido correctamente`);
+    } catch {
       toast.error("❌ Error al subir archivo de especificaciones");
     }
   };
 
-  // 📤 Crear producto con indicador de carga
+  // 💾 Guardar producto
   const handleSubmit = async () => {
-    if (!nombre) {
-      toast.warning("⚠️ El nombre es obligatorio");
-      return;
-    }
-
-    if (precio <= 0) {
-      toast.warning("⚠️ El precio debe ser mayor a 0");
-      return;
-    }
-
-    if (stock < 0) {
-      toast.warning("⚠️ El stock no puede ser negativo");
-      return;
-    }
+    if (!nombre.trim()) return toast.warning("⚠️ El nombre es obligatorio");
+    if (precio <= 0) return toast.warning("⚠️ El precio debe ser mayor a 0");
 
     const toastId = toast.loading("Subiendo producto...");
 
     try {
       let imagenUrl: string | undefined;
-
-      // 1️⃣ Subir imagen al backend (si existe)
       if (imagenFile) {
-        toast.message("📤 Subiendo imagen...");
         const formData = new FormData();
         formData.append("file", imagenFile);
-
         const res = await fetch(`${API_URL}/upload`, {
           method: "POST",
           body: formData,
         });
-
-        if (!res.ok) throw new Error("Error al subir la imagen al backend");
-
+        if (!res.ok) throw new Error("Error al subir la imagen");
         const data = await res.json();
         imagenUrl = data.url;
-        toast.success("✅ Imagen subida correctamente", { id: toastId });
       }
 
-      // 2️⃣ Crear producto
-      const nuevoProducto: NewProduct = {
+      const nuevoProducto: Partial<Product> = {
         nombre,
-        descripcion: descripcion || "Sin descripción",
+        descripcion,
         precio,
         stock,
-        categoria,
-        etiqueta,
+        categoriaId: categoriaId || undefined,
+        etiquetaId: etiquetaId || undefined,
         imagenUrl,
         specFileUrl,
-        estado: "Activo",
+        estado: "activo",
       };
 
-      const productoCreado = await createProduct(nuevoProducto);
-
-      // 3️⃣ Actualizar UI
+      const productoCreado = await createProduct(nuevoProducto as NewProduct);
       onAdd(productoCreado);
       toast.success("✅ Producto creado correctamente", { id: toastId });
-      resetForm();
-      setShowSaveConfirm(false);
       onClose();
-    } catch {
-      toast.error("❌ Error al crear el producto o subir la imagen.", {
-        id: toastId,
-      });
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Error al crear producto", { id: toastId });
+    } finally {
+      setShowSaveConfirm(false);
     }
   };
 
   return (
     <>
-      {/* 🧾 Modal */}
       <Dialog
         open={isOpen}
         onClose={onClose}
@@ -199,7 +157,6 @@ export default function AddProductModal({
             Agregar producto
           </Dialog.Title>
 
-          {/* 📋 Formulario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 🧱 Columna izquierda */}
             <div className="space-y-5">
@@ -227,89 +184,43 @@ export default function AddProductModal({
                 <label className="label-base">Descripción</label>
               </div>
 
-              {/* 💲 Precio y Stock */}
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {/* Precio */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={precioInput}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(",", ".");
-                      if (/^[0-9]*[.,]?[0-9]*$/.test(value))
-                        setPrecioInput(value);
-                    }}
-                    onBlur={() => {
-                      const num = parseFloat(precioInput);
-                      if (isNaN(num)) {
-                        setPrecio(0);
-                        setPrecioInput("0.00");
-                        return;
-                      }
-                      const positive = Math.abs(num);
-                      setPrecio(positive);
-                      setPrecioInput(
-                        positive.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })
-                      );
-                    }}
-                    onFocus={() => setPrecioInput(precio.toString())}
-                    onKeyDown={(e) => {
-                      if (["e", "E", "+", "-"].includes(e.key))
-                        e.preventDefault();
-                    }}
-                    className="input-base peer"
-                    placeholder=" "
-                  />
-                  <label className="label-base">Precio</label>
-                </div>
+              {/* Precio */}
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  value={precio}
+                  onChange={(e) => setPrecio(parseFloat(e.target.value))}
+                  className="input-base peer"
+                  placeholder=" "
+                />
+                <label className="label-base">Precio</label>
+              </div>
 
-                {/* Stock */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={stockInput}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
-                      if (/^\d*$/.test(value)) setStockInput(value);
-                    }}
-                    onBlur={() => {
-                      const num = parseInt(stockInput, 10);
-                      if (isNaN(num)) {
-                        setStock(0);
-                        setStockInput("0");
-                        return;
-                      }
-                      const positive = Math.abs(num);
-                      setStock(positive);
-                      setStockInput(positive.toLocaleString("en-US"));
-                    }}
-                    onFocus={() => setStockInput(stock.toString())}
-                    onKeyDown={(e) => {
-                      if (["e", "E", "+", "-", "."].includes(e.key))
-                        e.preventDefault();
-                    }}
-                    className="input-base peer"
-                    placeholder=" "
-                  />
-                  <label className="label-base">Stock</label>
-                </div>
+              {/* Stock */}
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  value={stock}
+                  onChange={(e) => setStock(parseInt(e.target.value))}
+                  className="input-base peer"
+                  placeholder=" "
+                />
+                <label className="label-base">Stock</label>
               </div>
 
               {/* Categoría */}
               <div className="relative">
                 <select
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
+                  value={categoriaId || ""}
+                  onChange={(e) => setCategoriaId(Number(e.target.value))}
                   className="select-base peer"
                 >
+                  <option value="">Sin categoría</option>
                   {categorias.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nombre}
                     </option>
                   ))}
                 </select>
@@ -319,18 +230,14 @@ export default function AddProductModal({
               {/* Etiqueta */}
               <div className="relative">
                 <select
-                  value={etiqueta || ""}
-                  onChange={(e) =>
-                    setEtiqueta(
-                      e.target.value as "Nuevo" | "Oferta" | undefined
-                    )
-                  }
+                  value={etiquetaId || ""}
+                  onChange={(e) => setEtiquetaId(Number(e.target.value))}
                   className="select-base peer"
                 >
                   <option value="">Sin etiqueta</option>
                   {etiquetas.map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
+                    <option key={tag.id} value={tag.id}>
+                      {tag.nombre}
                     </option>
                   ))}
                 </select>
@@ -350,49 +257,26 @@ export default function AddProductModal({
                 {specFileUrl ? (
                   <div className="flex flex-col items-center gap-2 text-sm">
                     <div className="flex gap-3 items-center justify-center">
-                      {/* 👁️ Ver archivo */}
-                      <div className="relative group">
-                        <label
-                          onClick={() => window.open(specFileUrl, "_blank")}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
-                        >
-                          <Eye size={14} strokeWidth={1.8} />
-                          Ver
-                        </label>
-                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
-                          Abrir archivo
-                        </span>
-                      </div>
-
-                      {/* 🗑️ Quitar archivo */}
-                      <div className="relative group">
-                        <label
-                          onClick={() => {
-                            setSpecFileUrl(null);
-                            toast.info(
-                              "🗑️ Archivo de especificaciones eliminado"
-                            );
-                          }}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
-                        >
-                          <Trash2 size={14} strokeWidth={1.8} />
-                          Quitar
-                        </label>
-                        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition">
-                          Eliminar archivo
-                        </span>
-                      </div>
+                      <button
+                        onClick={() => window.open(specFileUrl, "_blank")}
+                        className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                      >
+                        <Eye size={14} strokeWidth={1.8} /> Ver
+                      </button>
+                      <button
+                        onClick={() => setSpecFileUrl(null)}
+                        className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                      >
+                        <Trash2 size={14} strokeWidth={1.8} /> Quitar
+                      </button>
                     </div>
-
-                    {/* 📄 Nombre del archivo */}
                     <p className="text-xs text-zinc-500 truncate max-w-[230px] text-center mt-1">
                       {decodeURIComponent(specFileUrl.split("/").pop() || "")}
                     </p>
                   </div>
                 ) : (
                   <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold cursor-pointer transition shadow-sm">
-                    <Upload size={14} strokeWidth={1.8} />
-                    Subir archivo
+                    <Upload size={14} strokeWidth={1.8} /> Subir archivo
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
@@ -410,7 +294,6 @@ export default function AddProductModal({
                 </label>
 
                 <div className="flex flex-wrap justify-center gap-2 mb-3">
-                  {/* Botón Tomar foto */}
                   <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-yellow-500 text-black text-xs font-medium hover:bg-yellow-600 cursor-pointer transition">
                     <Camera size={14} strokeWidth={1.5} />
                     <span>Tomar</span>
@@ -423,7 +306,6 @@ export default function AddProductModal({
                     />
                   </label>
 
-                  {/* Botón Subir archivo */}
                   <label className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-zinc-700 text-white text-xs font-medium hover:bg-zinc-600 cursor-pointer transition">
                     <span>📁 Subir</span>
                     <input
@@ -435,7 +317,6 @@ export default function AddProductModal({
                   </label>
                 </div>
 
-                {/* Vista previa */}
                 {imagenPreview ? (
                   <img
                     src={imagenPreview}
