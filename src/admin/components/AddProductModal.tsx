@@ -45,7 +45,6 @@ export default function AddProductModal({
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState<number>(0);
-  const [stock, setStock] = useState<number>(0);
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [etiquetaId, setEtiquetaId] = useState<number | null>(null);
 
@@ -124,7 +123,6 @@ export default function AddProductModal({
         nombre,
         descripcion,
         precio,
-        stock,
         categoriaId: categoriaId || undefined,
         etiquetaId: etiquetaId || undefined,
         imagenUrl,
@@ -195,19 +193,6 @@ export default function AddProductModal({
                   placeholder=" "
                 />
                 <label className="label-base">Precio</label>
-              </div>
-
-              {/* Stock */}
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  value={stock}
-                  onChange={(e) => setStock(parseInt(e.target.value))}
-                  className="input-base peer"
-                  placeholder=" "
-                />
-                <label className="label-base">Stock</label>
               </div>
 
               {/* Categoría */}

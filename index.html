@@ -1,10 +1,79 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>weldzone</title>
+
+    <!-- 🔖 Iconos y manifest -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- 🧭 PWA fullscreen para iOS y Android -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="WeldZone" />
+
+    <!-- 🎨 Colores -->
+    <meta name="theme-color" content="#FFD700" />
+
+    <!-- 📱 Splash screens personalizados para iOS -->
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-iPhone-SE-5.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-iPhone-6-8.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-iPhone-11-XR.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-iPhone-XS-Max.png"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-iPad-Pro-10-5.png"
+      media="(min-device-width: 834px) and (max-device-width: 1112px) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-iPad-Pro-12-9.png"
+      media="(min-device-width: 1024px) and (max-device-width: 1366px) and (orientation: portrait)"
+    />
+
+    <!-- 🌙 Splash alternativo modo oscuro -->
+    <link
+      rel="apple-touch-startup-image"
+      href="/splash/splash-dark.png"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="theme-color"
+      content="#1A1A1A"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <!-- 🏷️ Metadatos -->
+    <meta name="application-name" content="WeldZone" />
+    <meta name="msapplication-TileColor" content="#FFD700" />
+    <meta name="msapplication-TileImage" content="/apple-touch-icon.png" />
+    <title>WeldZone — Todo para el soldador</title>
+    <meta
+      name="description"
+      content="Encuentra máquinas de soldar, consumibles, seguridad industrial y más. Tu aliado en soldadura profesional."
+    />
   </head>
   <body>
     <div id="root"></div>

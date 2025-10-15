@@ -96,11 +96,17 @@ export default function Header({
               <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
               <Dialog.Content
                 className="fixed top-0 right-0 h-full w-64 
-             bg-zinc-50 dark:bg-zinc-950 
-             text-zinc-900 dark:text-zinc-100 
-             shadow-lg z-50 flex flex-col p-6 
-             animate-in slide-in-from-right duration-300"
+     bg-zinc-50 dark:bg-zinc-950 
+     text-zinc-900 dark:text-zinc-100 
+     shadow-lg z-50 flex flex-col p-6 
+     animate-in slide-in-from-right duration-300"
               >
+                {/* ✅ Título y descripción accesibles (invisibles) */}
+                <Dialog.Title className="sr-only">Menú principal</Dialog.Title>
+                <Dialog.Description className="sr-only">
+                  Navegación principal del sitio
+                </Dialog.Description>
+
                 {/* Header del menú visible */}
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-lg font-bold">Menú</span>

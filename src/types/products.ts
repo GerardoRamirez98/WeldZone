@@ -5,7 +5,6 @@ export interface Product {
   nombre: string;
   descripcion?: string;
   precio: number;
-  stock: number;
 
   // 🔹 Relaciones dinámicas (según tu modelo Prisma)
   categoriaId?: number | null; // FK hacia Categoria

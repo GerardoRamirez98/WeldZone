@@ -5,12 +5,11 @@ import { useCart } from "../context/CartContext";
 import { useState, useEffect } from "react";
 
 export default function ProductCard({ product }: { product: Product }) {
-  const isAgotado = product.estado === "agotado" || product.stock <= 0;
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [open, setOpen] = useState(false); // 👈 Nuevo estado
+  const [open, setOpen] = useState(false);
 
-  // 🧠 Cuando el modal está abierto, oscurece el fondo
+  // 🧠 Oscurecer fondo al abrir modal
   useEffect(() => {
     if (open) {
       document.body.classList.add("modal-open");
@@ -21,15 +20,14 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      {/* 🔹 Toda la tarjeta abre el modal */}
+      {/* 🔹 Tarjeta principal */}
       <Dialog.Trigger asChild>
         <div
           className={`group relative rounded-2xl border bg-white p-3 shadow-sm transition 
             border-zinc-200 hover:shadow-md hover:scale-[1.01]
-            dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer
-            ${isAgotado ? "opacity-60 grayscale cursor-not-allowed" : ""}`}
+            dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer`}
         >
-          {/* 🏷️ ETIQUETA NUEVO / OFERTA */}
+          {/* 🏷️ Etiqueta (oferta, nuevo, etc.) */}
           {product.etiqueta && (
             <div
               className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md
@@ -43,22 +41,13 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* 🔴 BADGE DE AGOTADO */}
-          {isAgotado && (
-            <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
-              Agotado
-            </div>
-          )}
-
-          {/* 🖼️ IMAGEN DEL PRODUCTO */}
+          {/* 🖼️ Imagen del producto */}
           <div className="aspect-square overflow-hidden rounded-xl">
             {product.imagenUrl ? (
               <img
                 src={product.imagenUrl}
                 alt={product.nombre}
-                className={`h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] ${
-                  isAgotado ? "grayscale" : ""
-                }`}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                 loading="lazy"
               />
             ) : (
@@ -68,7 +57,7 @@ export default function ProductCard({ product }: { product: Product }) {
             )}
           </div>
 
-          {/* 📝 INFO DEL PRODUCTO */}
+          {/* 📝 Info del producto */}
           <div className="mt-3">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
               {product.nombre}
@@ -83,7 +72,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </Dialog.Trigger>
 
-      {/* 🟢 MODAL DE DETALLES */}
+      {/* 🟢 Modal de detalles */}
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-all" />
         <Dialog.Content
@@ -91,7 +80,7 @@ export default function ProductCard({ product }: { product: Product }) {
             rounded-2xl border bg-white p-5 shadow-2xl border-zinc-200 
             dark:border-zinc-800 dark:bg-zinc-900"
         >
-          {/* 🖼️ Imagen grande con ficha técnica flotante */}
+          {/* 🖼️ Imagen grande */}
           <div className="relative">
             {product.imagenUrl && (
               <img
@@ -101,7 +90,7 @@ export default function ProductCard({ product }: { product: Product }) {
               />
             )}
 
-            {/* 🟨 LABEL FICHA TÉCNICA */}
+            {/* 🟨 Ficha técnica */}
             {product.specFileUrl && (
               <label
                 onClick={() =>
@@ -122,7 +111,7 @@ export default function ProductCard({ product }: { product: Product }) {
             )}
           </div>
 
-          {/* 🏷️ Etiqueta dentro del modal */}
+          {/* Etiqueta visible en el modal */}
           {product.etiqueta && (
             <div
               className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md"
@@ -146,14 +135,14 @@ export default function ProductCard({ product }: { product: Product }) {
             ${product.precio.toLocaleString("es-MX")} MXN
           </p>
 
-          {/* Contador */}
+          {/* 🔢 Contador de cantidad */}
           <div className="mt-4 flex items-center gap-3">
             <label
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               className="p-2 rounded-md border transition 
                 border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
                 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 
-                shadow-sm active:scale-95"
+                shadow-sm active:scale-95 cursor-pointer"
             >
               <Minus className="w-4 h-4 text-zinc-800 dark:text-zinc-100" />
             </label>
@@ -167,13 +156,13 @@ export default function ProductCard({ product }: { product: Product }) {
               className="p-2 rounded-md border transition 
                 border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
                 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 
-                shadow-sm active:scale-95"
+                shadow-sm active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4 text-zinc-800 dark:text-zinc-100" />
             </label>
           </div>
 
-          {/* 💰 Precio total dinámico */}
+          {/* 💰 Total dinámico */}
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             Total:{" "}
             <span className="font-semibold text-yellow-600 dark:text-yellow-400">
@@ -183,16 +172,14 @@ export default function ProductCard({ product }: { product: Product }) {
 
           {/* 🔹 Botones inferiores */}
           <div className="mt-5 flex flex-wrap justify-end gap-2">
-            {/* 🛒 Agregar al carrito */}
             <label
               onClick={() => addToCart(product, quantity)}
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 
-             text-white px-3 py-2 rounded-lg text-sm font-medium transition"
+             text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" /> Agregar al carrito
             </label>
 
-            {/* ❌ Cerrar */}
             <Dialog.Close
               className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium 
                         text-white hover:bg-zinc-700 transition"

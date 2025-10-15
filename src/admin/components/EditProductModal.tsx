@@ -59,8 +59,6 @@ export default function EditProductModal({
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState(0);
   const [precioInput, setPrecioInput] = useState("0.00");
-  const [stock, setStock] = useState(0);
-  const [stockInput, setStockInput] = useState("0");
 
   // 🔹 Relacionales
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
@@ -81,8 +79,6 @@ export default function EditProductModal({
       setDescripcion(producto.descripcion || "");
       setPrecio(producto.precio);
       setPrecioInput(producto.precio.toFixed(2));
-      setStock(producto.stock);
-      setStockInput(producto.stock.toString());
 
       // ⚙️ Cargar relaciones (maneja objeto o ID directo)
       setCategoriaId(producto.categoriaId ?? producto.categoria?.id ?? null);
@@ -140,7 +136,6 @@ export default function EditProductModal({
         nombre,
         descripcion,
         precio,
-        stock,
         categoriaId: categoriaId ?? undefined,
         etiquetaId: etiquetaId ?? undefined,
         imagenUrl,
@@ -153,10 +148,6 @@ export default function EditProductModal({
       }
       if (precio <= 0) {
         toast.warning("⚠️ El precio debe ser mayor a 0");
-        return;
-      }
-      if (stock < 0) {
-        toast.warning("⚠️ El stock no puede ser negativo");
         return;
       }
 
@@ -212,7 +203,7 @@ export default function EditProductModal({
                 <label className="label-base">Descripción</label>
               </div>
 
-              {/* Precio y Stock */}
+              {/* Precio */}
               <div className="grid grid-cols-2 gap-4 mt-4">
                 {/* Precio */}
                 <div className="relative">
@@ -251,40 +242,6 @@ export default function EditProductModal({
                     placeholder=" "
                   />
                   <label className="label-base">Precio</label>
-                </div>
-
-                {/* Stock */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={stockInput}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
-                      if (/^\d*$/.test(value)) {
-                        setStockInput(value);
-                      }
-                    }}
-                    onBlur={() => {
-                      const num = parseInt(stockInput, 10);
-                      if (isNaN(num)) {
-                        setStock(0);
-                        setStockInput("0");
-                        return;
-                      }
-                      const positive = Math.abs(num);
-                      setStock(positive);
-                      setStockInput(positive.toLocaleString("en-US"));
-                    }}
-                    onFocus={() => setStockInput(stock.toString())}
-                    onKeyDown={(e) => {
-                      if (["e", "E", "+", "-", "."].includes(e.key))
-                        e.preventDefault();
-                    }}
-                    className="input-base peer"
-                    placeholder=" "
-                  />
-                  <label className="label-base">Stock</label>
                 </div>
               </div>
 

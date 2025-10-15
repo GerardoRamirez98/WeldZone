@@ -6,7 +6,7 @@ import CartFloatingButton from "../components/CartFloatingButton";
 
 export default function Catalogo() {
   const [q, setQ] = useState("");
-  const { products, loading } = useProducts();
+  const { products, loading, error } = useProducts();
 
   // 🔎 Filtrar productos según búsqueda
   const filtered: Product[] = useMemo(() => {
@@ -19,10 +19,11 @@ export default function Catalogo() {
     );
   }, [q, products]);
 
-  if (loading) {
+  // ⚠️ Error al cargar
+  if (error) {
     return (
-      <main className="container py-6 text-center">
-        <p>Cargando productos...</p>
+      <main className="container py-6 text-center text-red-500">
+        Error al cargar productos. Intenta de nuevo más tarde.
       </main>
     );
   }
@@ -33,7 +34,8 @@ export default function Catalogo() {
         <div>
           <h1 className="text-2xl font-bold">Catálogo</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Productos para soldadura — {filtered.length} resultado(s)
+            Productos para soldadura —{" "}
+            {loading ? "..." : `${filtered.length} resultado(s)`}
           </p>
         </div>
 
@@ -49,9 +51,19 @@ export default function Catalogo() {
 
       {/* 🧱 Grilla de productos */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
+        {loading
+          ? // 💫 Skeletons
+            Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 animate-pulse"
+              >
+                <div className="aspect-square rounded-lg bg-zinc-200 dark:bg-zinc-800 mb-3"></div>
+                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2"></div>
+              </div>
+            ))
+          : filtered.map((p) => <ProductCard key={p.id} product={p} />)}
       </section>
 
       {/* 🛒 Botón flotante del carrito */}
