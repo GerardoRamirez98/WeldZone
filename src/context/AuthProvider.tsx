@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { AuthContext } from "./auth-context";
 import type { AuthContextType, User } from "./auth-context";
+import Loader from "../components/Loader";
 
 // 🌐 URL dinámica para desarrollo y producción
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -54,11 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-emerald-600 text-xl">
-        Cargando sesión...
-      </div>
-    );
+    return <Loader />;
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
