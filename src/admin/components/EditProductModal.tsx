@@ -1,4 +1,3 @@
-// src/admin/components/EditProductModal.tsx
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
@@ -7,38 +6,6 @@ import { updateProduct } from "../../api/products.api";
 import { toast } from "sonner";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-// 🧩 Helper para subir archivo de especificaciones
-async function uploadSpecFile(
-  file: File,
-  oldUrl?: string | null
-): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  if (oldUrl) {
-    const oldPath = extractPathFromPublicUrl(oldUrl, "products-specs");
-    if (oldPath) formData.append("oldPath", oldPath);
-  }
-  const res = await fetch(`${API_URL}/upload-specs`, {
-    method: "POST",
-    body: formData,
-  });
-  if (!res.ok) throw new Error(await res.text());
-  const data = await res.json();
-  return data.url;
-}
-
-function extractPathFromPublicUrl(url: string, bucket: string) {
-  try {
-    const u = new URL(url);
-    const marker = `/storage/v1/object/public/${bucket}/`;
-    const idx = u.pathname.indexOf(marker);
-    if (idx === -1) return null;
-    return decodeURIComponent(u.pathname.substring(idx + marker.length));
-  } catch {
-    return null;
-  }
-}
 
 interface Categoria {
   id: number;
@@ -69,38 +36,40 @@ export default function EditProductModal({
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState(0);
-
-  // 🔹 Relaciones
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [etiquetaId, setEtiquetaId] = useState<number | null>(null);
+
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
 
+  // 🔹 Archivos locales
   const [imagenFile, setImagenFile] = useState<File | null>(null);
-  const [imagenPreview, setImagenPreview] = useState("");
+  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+  const [specFile, setSpecFile] = useState<File | null>(null);
   const [specFileUrl, setSpecFileUrl] = useState<string | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // ✅ Cargar producto actual
+  // ✅ Cargar datos iniciales
   useEffect(() => {
     if (producto) {
       setNombre(producto.nombre);
       setDescripcion(producto.descripcion || "");
       setPrecio(producto.precio);
-
       setCategoriaId(producto.categoriaId ?? producto.categoria?.id ?? null);
       setEtiquetaId(producto.etiquetaId ?? producto.etiqueta?.id ?? null);
-
-      setImagenPreview(producto.imagenUrl || "");
+      setImagenPreview(producto.imagenUrl || null);
       setSpecFileUrl(producto.specFileUrl || null);
       setImagenFile(null);
+      setSpecFile(null);
     }
   }, [producto]);
 
-  // 🚀 Cargar categorías y etiquetas al abrir
+  // 🚀 Cargar categorías y etiquetas
   useEffect(() => {
     if (!isOpen) return;
     const fetchData = async () => {
@@ -118,50 +87,91 @@ export default function EditProductModal({
     fetchData();
   }, [isOpen]);
 
-  // 📸 Carga de imagen
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 📸 Seleccionar imagen localmente
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (imagenPreview) URL.revokeObjectURL(imagenPreview);
       setImagenFile(file);
       setImagenPreview(URL.createObjectURL(file));
-      toast.success("📸 Imagen cargada correctamente");
+      toast.success("📸 Imagen seleccionada correctamente");
     }
   };
 
-  // 📄 Carga archivo de especificaciones
-  const handleSpecUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 📄 Seleccionar archivo localmente
+  const handleSpecSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try {
-      toast.message("📤 Subiendo archivo de especificaciones...");
-      const url = await uploadSpecFile(file, specFileUrl);
-      setSpecFileUrl(url);
-      toast.success(`✅ ${file.name} subido correctamente`);
-    } catch (err) {
-      console.error(err);
-      toast.error("❌ Error al subir el archivo de especificaciones");
-    }
+    setSpecFile(file);
+    toast.success(`📄 Archivo seleccionado: ${file.name}`);
   };
 
-  // 💾 Guardar cambios
+  // 💾 Guardar cambios con rollback visual
   const handleUpdate = async () => {
-    try {
-      let imagenUrl = producto.imagenUrl;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-      if (imagenFile) {
-        const formData = new FormData();
-        formData.append("file", imagenFile);
-        const res = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          body: formData,
-        });
-        if (!res.ok) throw new Error("Error al subir la nueva imagen");
-        const data = await res.json();
-        imagenUrl = data.url;
+    // 🧩 Guardamos referencias originales para rollback
+    const oldPreview = imagenPreview;
+    const oldSpecUrl = specFileUrl;
+
+    try {
+      if (!nombre.trim()) {
+        toast.warning("⚠️ El nombre es obligatorio");
+        setIsSubmitting(false);
+        return;
+      }
+      if (precio <= 0) {
+        toast.warning("⚠️ El precio debe ser mayor a 0");
+        setIsSubmitting(false);
+        return;
       }
 
-      if (!nombre.trim()) return toast.warning("⚠️ El nombre es obligatorio");
-      if (precio <= 0) return toast.warning("⚠️ El precio debe ser mayor a 0");
+      const toastId = toast.loading("Actualizando producto...");
+
+      let imagenUrl = producto.imagenUrl;
+      let specUrl = producto.specFileUrl;
+
+      // 🔹 Subir imagen si se cambió
+      if (imagenFile) {
+        try {
+          const formData = new FormData();
+          formData.append("file", imagenFile);
+          const res = await fetch(`${API_URL}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          if (!res.ok) throw new Error("Error al subir imagen");
+          const data = await res.json();
+          imagenUrl = data.url;
+        } catch (err) {
+          console.error("❌ Falla en subida de imagen:", err);
+          setImagenPreview(oldPreview); // 🔄 rollback visual
+          setImagenFile(null);
+          toast.error("❌ Error al subir la imagen, se mantiene la anterior");
+        }
+      }
+
+      // 🔹 Subir archivo PDF/DOCX si se cambió
+      if (specFile) {
+        try {
+          const formData = new FormData();
+          formData.append("file", specFile);
+          const res = await fetch(`${API_URL}/upload-specs`, {
+            method: "POST",
+            body: formData,
+          });
+          if (!res.ok)
+            throw new Error("Error al subir archivo de especificaciones");
+          const data = await res.json();
+          specUrl = data.url;
+        } catch (err) {
+          console.error("❌ Falla en subida de archivo:", err);
+          setSpecFileUrl(oldSpecUrl); // 🔄 rollback visual
+          setSpecFile(null);
+          toast.error("❌ Error al subir el archivo, se mantiene el anterior");
+        }
+      }
 
       const actualizado: Partial<Product> = {
         nombre,
@@ -170,17 +180,25 @@ export default function EditProductModal({
         categoriaId: categoriaId || undefined,
         etiquetaId: etiquetaId || undefined,
         imagenUrl,
-        specFileUrl,
+        specFileUrl: specUrl,
       };
 
       const actualizadoDB = await updateProduct(producto.id, actualizado);
       onUpdate(actualizadoDB);
+
+      toast.success("✅ Producto actualizado correctamente", { id: toastId });
       setShowSaveConfirm(false);
       onClose();
-      toast.success("✅ Producto actualizado correctamente");
     } catch (err) {
-      console.error("❌ Error al actualizar el producto:", err);
-      toast.error("❌ No se pudo actualizar el producto o subir la imagen.");
+      console.error("❌ Error al actualizar producto:", err);
+      toast.error(
+        "❌ Error al guardar los cambios. No se modificó el producto."
+      );
+      // 🧩 Rollback total visual
+      setImagenPreview(oldPreview);
+      setSpecFileUrl(oldSpecUrl);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -200,7 +218,6 @@ export default function EditProductModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Columna izquierda */}
             <div className="space-y-5">
-              {/* Nombre */}
               <div className="relative">
                 <input
                   type="text"
@@ -212,7 +229,6 @@ export default function EditProductModal({
                 <label className="label-base">Nombre</label>
               </div>
 
-              {/* Descripción */}
               <div className="relative">
                 <textarea
                   value={descripcion}
@@ -224,7 +240,6 @@ export default function EditProductModal({
                 <label className="label-base">Descripción</label>
               </div>
 
-              {/* Precio */}
               <div className="relative">
                 <input
                   type="number"
@@ -237,14 +252,14 @@ export default function EditProductModal({
                 <label className="label-base">Precio</label>
               </div>
 
-              {/* Categoría */}
               <div className="relative">
                 <select
                   value={categoriaId ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setCategoriaId(value ? Number(value) : null);
-                  }}
+                  onChange={(e) =>
+                    setCategoriaId(
+                      e.target.value ? Number(e.target.value) : null
+                    )
+                  }
                   className="select-base peer"
                 >
                   <option value="">Sin categoría</option>
@@ -257,14 +272,14 @@ export default function EditProductModal({
                 <label className="label-base">Categoría</label>
               </div>
 
-              {/* Etiqueta */}
               <div className="relative">
                 <select
                   value={etiquetaId ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setEtiquetaId(value ? Number(value) : null);
-                  }}
+                  onChange={(e) =>
+                    setEtiquetaId(
+                      e.target.value ? Number(e.target.value) : null
+                    )
+                  }
                   className="select-base peer"
                 >
                   <option value="">Sin etiqueta</option>
@@ -279,45 +294,45 @@ export default function EditProductModal({
             </div>
 
             {/* Columna derecha */}
-            <div className="flex flex-col items-center justify-start gap-6">
+            <div className="flex flex-col gap-6 items-center">
               {/* Imagen */}
               <div className="flex flex-col items-center w-full">
                 <label className="text-sm mb-2 text-zinc-700 dark:text-zinc-300 font-semibold">
                   Imagen del producto
                 </label>
 
-                <div className="flex justify-center items-center gap-3 mb-4">
-                  <label className="flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer transition">
-                    <Camera size={18} strokeWidth={1.8} />
+                <div className="flex justify-center items-center gap-3 mb-3">
+                  <label className="flex items-center justify-center px-3 py-1.5 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-medium cursor-pointer transition">
+                    <Upload size={14} strokeWidth={1.8} /> Seleccionar imagen
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={handleImageUpload}
+                      onChange={handleImageSelect}
                     />
                   </label>
 
-                  <label
-                    onClick={() => {
-                      if (!imagenPreview) return;
-                      setImagenFile(null);
-                      setImagenPreview("");
-                      toast.info("🗑️ Imagen quitada del producto");
-                    }}
-                    className={`flex items-center justify-center w-9 h-9 rounded-full shadow-sm active:scale-[0.95] transition cursor-pointer ${
-                      imagenPreview
-                        ? "bg-red-600 text-white hover:bg-red-700"
-                        : "bg-zinc-400 text-zinc-300 cursor-not-allowed opacity-70"
-                    }`}
-                  >
-                    <Trash2 size={18} strokeWidth={1.8} />
-                  </label>
+                  {imagenPreview && (
+                    <button
+                      onClick={() => {
+                        setImagenFile(null);
+                        setImagenPreview(null);
+                      }}
+                      className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition"
+                    >
+                      <Trash2 size={14} strokeWidth={1.8} /> Quitar
+                    </button>
+                  )}
                 </div>
 
                 {imagenPreview ? (
                   <img
                     src={imagenPreview}
                     alt="Preview"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/placeholder-image.png";
+                    }}
                     className="w-44 h-44 object-contain border-2 border-yellow-500 rounded-xl shadow-lg"
                   />
                 ) : (
@@ -334,39 +349,47 @@ export default function EditProductModal({
                   Archivo de especificaciones
                 </label>
 
-                {specFileUrl ? (
+                {specFile || specFileUrl ? (
                   <div className="flex flex-col items-center gap-2 text-sm">
-                    <div className="flex gap-3 items-center justify-center">
-                      <label
-                        onClick={() => window.open(specFileUrl, "_blank")}
-                        className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() =>
+                          window.open(
+                            specFile
+                              ? URL.createObjectURL(specFile)
+                              : specFileUrl!,
+                            "_blank"
+                          )
+                        }
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition"
                       >
-                        <Eye size={14} strokeWidth={1.8} />
-                        Ver
-                      </label>
-                      <label
+                        <Eye size={14} strokeWidth={1.8} /> Ver
+                      </button>
+                      <button
                         onClick={() => {
+                          setSpecFile(null);
                           setSpecFileUrl(null);
-                          toast.info("🗑️ Archivo eliminado");
                         }}
-                        className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition text-xs cursor-pointer shadow-sm"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition"
                       >
-                        <Trash2 size={14} strokeWidth={1.8} />
-                        Quitar
-                      </label>
+                        <Trash2 size={14} strokeWidth={1.8} /> Quitar
+                      </button>
                     </div>
                     <p className="text-xs text-zinc-500 truncate max-w-[230px] text-center mt-1">
-                      {decodeURIComponent(specFileUrl.split("/").pop() || "")}
+                      {specFile
+                        ? specFile.name
+                        : decodeURIComponent(
+                            specFileUrl?.split("/").pop() || ""
+                          )}
                     </p>
                   </div>
                 ) : (
                   <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold cursor-pointer transition shadow-sm">
-                    <Upload size={14} strokeWidth={1.8} />
-                    Subir archivo
+                    <Upload size={14} strokeWidth={1.8} /> Seleccionar archivo
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
-                      onChange={handleSpecUpload}
+                      onChange={handleSpecSelect}
                       className="hidden"
                     />
                   </label>
@@ -391,91 +414,29 @@ export default function EditProductModal({
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-yellow-500 text-black font-semibold hover:bg-yellow-600 transition"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+                  isSubmitting
+                    ? "bg-yellow-400 text-black opacity-70 cursor-not-allowed"
+                    : "bg-yellow-500 hover:bg-yellow-600 text-black"
+                }`}
                 onClick={() => setShowSaveConfirm(true)}
               >
-                Guardar cambios
+                {isSubmitting ? "Guardando..." : "Guardar cambios"}
               </button>
             </div>
           </div>
         </div>
       </Dialog>
 
-      {/* Confirmaciones (sin cambios visuales, solo limpieza lógica) */}
-      <Dialog
-        open={showCancelConfirm}
-        onClose={() => setShowCancelConfirm(false)}
-        className="fixed inset-0 z-50 flex items-center justify-center"
-      >
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4">
-            ¿Cancelar edición?
-          </Dialog.Title>
-          <p className="text-center text-sm mb-6">
-            Los cambios no guardados se perderán.
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
-              onClick={() => setShowCancelConfirm(false)}
-            >
-              Volver
-            </button>
-            <button
-              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-semibold transition"
-              onClick={() => {
-                setShowCancelConfirm(false);
-                onClose();
-              }}
-            >
-              Sí, salir
-            </button>
-          </div>
-        </div>
-      </Dialog>
-
-      {/* Confirmaciones (sin cambios visuales, solo limpieza lógica) */}
-      <Dialog
-        open={showCancelConfirm}
-        onClose={() => setShowCancelConfirm(false)}
-        className="fixed inset-0 z-50 flex items-center justify-center"
-      >
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4">
-            ¿Cancelar edición?
-          </Dialog.Title>
-          <p className="text-center text-sm mb-6">
-            Los cambios no guardados se perderán.
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
-              onClick={() => setShowCancelConfirm(false)}
-            >
-              Volver
-            </button>
-            <button
-              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-semibold transition"
-              onClick={() => {
-                setShowCancelConfirm(false);
-                onClose();
-              }}
-            >
-              Sí, salir
-            </button>
-          </div>
-        </div>
-      </Dialog>
-
+      {/* Confirmación Guardar */}
       <Dialog
         open={showSaveConfirm}
         onClose={() => setShowSaveConfirm(false)}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
           <Dialog.Title className="text-lg font-bold text-center mb-4">
             ¿Guardar cambios?
           </Dialog.Title>
@@ -490,41 +451,77 @@ export default function EditProductModal({
               Cancelar
             </button>
             <button
-              className="px-4 py-2 bg-yellow-500 text-black hover:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-600 rounded-lg font-semibold transition"
               onClick={handleUpdate}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-yellow-500 text-black hover:bg-yellow-600 rounded-lg font-semibold transition"
             >
-              Sí, guardar
+              {isSubmitting ? "Guardando..." : "Sí, guardar"}
             </button>
           </div>
         </div>
       </Dialog>
 
+      {/* Confirmación Cancelar */}
+      <Dialog
+        open={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4">
+            ¿Cancelar edición?
+          </Dialog.Title>
+          <p className="text-center text-sm mb-6">
+            Los cambios no guardados se perderán.
+          </p>
+          <div className="flex justify-center gap-3">
+            <button
+              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
+              onClick={() => setShowCancelConfirm(false)}
+            >
+              Volver
+            </button>
+            <button
+              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold transition"
+              onClick={() => {
+                setShowCancelConfirm(false);
+                onClose();
+              }}
+            >
+              Sí, salir
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Confirmación Eliminar */}
       <Dialog
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600 dark:text-red-400">
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600">
             ¿Eliminar producto?
           </Dialog.Title>
           <p className="text-center text-sm mb-6">
             Estás a punto de eliminar{" "}
-            <span className="font-semibold text-red-500 dark:text-red-400">
+            <span className="font-semibold text-red-500">
               {producto?.nombre}
             </span>
             . Esta acción no se puede deshacer.
           </p>
           <div className="flex justify-center gap-3">
             <button
-              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
+              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 rounded-lg transition"
               onClick={() => setShowDeleteConfirm(false)}
             >
               Cancelar
             </button>
             <button
-              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-semibold transition"
+              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold transition"
               onClick={() => {
                 onDelete(producto.id);
                 setShowDeleteConfirm(false);
