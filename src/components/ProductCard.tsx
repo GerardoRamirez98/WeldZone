@@ -65,20 +65,26 @@ export default function ProductCard({ product }: { product: Product }) {
             {/* Miniatura borrosa (blur-up) */}
             {product.imagenUrl && (
               <img
-                src={`${baseRenderUrl}?width=30&quality=5&resize=contain`}
+                src={`${product.imagenUrl.replace(
+                  "/object/public/",
+                  "/render/image/public/"
+                )}?width=30&quality=5&resize=contain`}
                 className="absolute inset-0 w-full h-full object-contain blur-lg scale-110"
                 aria-hidden="true"
               />
             )}
 
-            {/* Imagen final optimizada y sin recorte */}
+            {/* Imagen final optimizada sin recorte */}
             {product.imagenUrl ? (
               <img
-                src={`${baseRenderUrl}?width=400&quality=70&resize=contain`}
+                src={`${product.imagenUrl.replace(
+                  "/object/public/",
+                  "/render/image/public/"
+                )}?width=400&quality=70&resize=contain`}
                 alt={product.nombre}
                 loading="lazy"
                 onLoad={() => setImageLoaded(true)}
-                className={`relative z-10 max-w-full max-h-full object-contain transition-all duration-700 ease-out group-hover:scale-[1.02] ${
+                className={`relative z-10 max-h-full max-w-full object-contain transition-all duration-700 ease-out group-hover:scale-[1.02] ${
                   imageLoaded ? "blur-0 opacity-100" : "blur-md opacity-70"
                 }`}
               />
