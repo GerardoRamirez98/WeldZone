@@ -117,15 +117,30 @@ export default function AddProductModal({
     }
   };
 
+  // 🧠 Nuevo estado
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // 💾 Guardar producto
   const handleSubmit = async () => {
-    if (!nombre.trim()) return toast.warning("⚠️ El nombre es obligatorio");
-    if (precio <= 0) return toast.warning("⚠️ El precio debe ser mayor a 0");
+    if (isSubmitting) return; // 🚫 evita doble clic
+    setIsSubmitting(true);
+
+    if (!nombre.trim()) {
+      toast.warning("⚠️ El nombre es obligatorio");
+      setIsSubmitting(false);
+      return;
+    }
+    if (precio <= 0) {
+      toast.warning("⚠️ El precio debe ser mayor a 0");
+      setIsSubmitting(false);
+      return;
+    }
 
     const toastId = toast.loading("Subiendo producto...");
 
     try {
       let imagenUrl: string | undefined;
+
       if (imagenFile) {
         const formData = new FormData();
         formData.append("file", imagenFile);
@@ -153,12 +168,13 @@ export default function AddProductModal({
       onAdd(productoCreado);
       toast.success("✅ Producto creado correctamente", { id: toastId });
 
-      resetForm(); // 👈 limpia el formulario
-      onClose(); // 👈 cierra el modal
+      resetForm();
+      onClose();
     } catch (err) {
       console.error(err);
       toast.error("❌ Error al crear producto", { id: toastId });
     } finally {
+      setIsSubmitting(false); // 🔓 desbloquea el botón
       setShowSaveConfirm(false);
     }
   };
@@ -233,10 +249,14 @@ export default function AddProductModal({
               </div>
 
               {/* Categoría */}
+              {/* Categoría */}
               <div className="relative">
                 <select
-                  value={categoriaId || ""}
-                  onChange={(e) => setCategoriaId(Number(e.target.value))}
+                  value={categoriaId ?? ""} // mantiene el valor vacío si no hay categoría
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCategoriaId(value ? Number(value) : null); // ✅ evita NaN
+                  }}
                   className="select-base peer"
                 >
                   <option value="">Sin categoría</option>
@@ -252,8 +272,11 @@ export default function AddProductModal({
               {/* Etiqueta */}
               <div className="relative">
                 <select
-                  value={etiquetaId || ""}
-                  onChange={(e) => setEtiquetaId(Number(e.target.value))}
+                  value={etiquetaId ?? ""} // mantiene vacío si no hay etiqueta
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEtiquetaId(value ? Number(value) : null); // ✅ evita NaN
+                  }}
                   className="select-base peer"
                 >
                   <option value="">Sin etiqueta</option>
@@ -386,21 +409,57 @@ export default function AddProductModal({
           <Dialog.Title className="text-lg font-bold text-center mb-4">
             ¿Guardar producto?
           </Dialog.Title>
+
           <p className="text-center text-sm mb-6">
             Se agregará un nuevo producto a la lista.
           </p>
+
           <div className="flex justify-center gap-3">
             <button
-              className="px-4 py-2 bg-zinc-700 text-white rounded-lg"
+              className="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 transition"
               onClick={() => setShowSaveConfirm(false)}
+              disabled={isSubmitting}
             >
               Cancelar
             </button>
+
             <button
-              className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold"
+              disabled={isSubmitting}
+              className={`px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2
+          ${
+            isSubmitting
+              ? "bg-yellow-400 text-black opacity-70 cursor-not-allowed"
+              : "bg-yellow-500 hover:bg-yellow-600 text-black"
+          }`}
               onClick={handleSubmit}
             >
-              Sí, guardar
+              {isSubmitting ? (
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4 text-black"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l3 3-3 3v-4a8 8 0 01-8-8z"
+                    ></path>
+                  </svg>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                "Sí, guardar"
+              )}
             </button>
           </div>
         </div>

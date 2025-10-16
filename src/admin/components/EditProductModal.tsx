@@ -40,6 +40,17 @@ function extractPathFromPublicUrl(url: string, bucket: string) {
   }
 }
 
+interface Categoria {
+  id: number;
+  nombre: string;
+}
+
+interface Etiqueta {
+  id: number;
+  nombre: string;
+  color: string;
+}
+
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -58,11 +69,12 @@ export default function EditProductModal({
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState(0);
-  const [precioInput, setPrecioInput] = useState("0.00");
 
-  // 🔹 Relacionales
+  // 🔹 Relaciones
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [etiquetaId, setEtiquetaId] = useState<number | null>(null);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
 
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState("");
@@ -78,9 +90,7 @@ export default function EditProductModal({
       setNombre(producto.nombre);
       setDescripcion(producto.descripcion || "");
       setPrecio(producto.precio);
-      setPrecioInput(producto.precio.toFixed(2));
 
-      // ⚙️ Cargar relaciones (maneja objeto o ID directo)
       setCategoriaId(producto.categoriaId ?? producto.categoria?.id ?? null);
       setEtiquetaId(producto.etiquetaId ?? producto.etiqueta?.id ?? null);
 
@@ -90,7 +100,25 @@ export default function EditProductModal({
     }
   }, [producto]);
 
-  // 📸 Manejar carga de imagen
+  // 🚀 Cargar categorías y etiquetas al abrir
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchData = async () => {
+      try {
+        const [cats, tags] = await Promise.all([
+          fetch(`${API_URL}/config/categorias`).then((r) => r.json()),
+          fetch(`${API_URL}/config/etiquetas`).then((r) => r.json()),
+        ]);
+        setCategorias(cats);
+        setEtiquetas(tags);
+      } catch {
+        toast.error("❌ No se pudieron cargar categorías o etiquetas");
+      }
+    };
+    fetchData();
+  }, [isOpen]);
+
+  // 📸 Carga de imagen
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -100,7 +128,7 @@ export default function EditProductModal({
     }
   };
 
-  // 📄 Manejar carga del archivo de especificaciones
+  // 📄 Carga archivo de especificaciones
   const handleSpecUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -132,24 +160,18 @@ export default function EditProductModal({
         imagenUrl = data.url;
       }
 
+      if (!nombre.trim()) return toast.warning("⚠️ El nombre es obligatorio");
+      if (precio <= 0) return toast.warning("⚠️ El precio debe ser mayor a 0");
+
       const actualizado: Partial<Product> = {
         nombre,
         descripcion,
         precio,
-        categoriaId: categoriaId ?? undefined,
-        etiquetaId: etiquetaId ?? undefined,
+        categoriaId: categoriaId || undefined,
+        etiquetaId: etiquetaId || undefined,
         imagenUrl,
         specFileUrl,
       };
-
-      if (!nombre) {
-        toast.warning("⚠️ El nombre es obligatorio");
-        return;
-      }
-      if (precio <= 0) {
-        toast.warning("⚠️ El precio debe ser mayor a 0");
-        return;
-      }
 
       const actualizadoDB = await updateProduct(producto.id, actualizado);
       onUpdate(actualizadoDB);
@@ -175,7 +197,6 @@ export default function EditProductModal({
             Editar producto
           </Dialog.Title>
 
-          {/* 📋 Formulario */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Columna izquierda */}
             <div className="space-y-5">
@@ -204,81 +225,67 @@ export default function EditProductModal({
               </div>
 
               {/* Precio */}
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {/* Precio */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={precioInput}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(",", ".");
-                      if (/^[0-9]*[.,]?[0-9]*$/.test(value)) {
-                        setPrecioInput(value);
-                      }
-                    }}
-                    onBlur={() => {
-                      const num = parseFloat(precioInput);
-                      if (isNaN(num)) {
-                        setPrecio(0);
-                        setPrecioInput("0.00");
-                        return;
-                      }
-                      const positive = Math.abs(num);
-                      setPrecio(positive);
-                      setPrecioInput(
-                        positive.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })
-                      );
-                    }}
-                    onFocus={() => setPrecioInput(precio.toString())}
-                    onKeyDown={(e) => {
-                      if (["e", "E", "+", "-"].includes(e.key))
-                        e.preventDefault();
-                    }}
-                    className="input-base peer"
-                    placeholder=" "
-                  />
-                  <label className="label-base">Precio</label>
-                </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  value={precio}
+                  onChange={(e) => setPrecio(parseFloat(e.target.value))}
+                  className="input-base peer"
+                  placeholder=" "
+                />
+                <label className="label-base">Precio</label>
               </div>
 
               {/* Categoría */}
               <div className="relative">
-                <input
-                  type="number"
+                <select
                   value={categoriaId ?? ""}
-                  onChange={(e) => setCategoriaId(Number(e.target.value))}
-                  className="input-base peer"
-                  placeholder=" "
-                />
-                <label className="label-base">ID de categoría</label>
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCategoriaId(value ? Number(value) : null);
+                  }}
+                  className="select-base peer"
+                >
+                  <option value="">Sin categoría</option>
+                  {categorias.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nombre}
+                    </option>
+                  ))}
+                </select>
+                <label className="label-base">Categoría</label>
               </div>
 
               {/* Etiqueta */}
               <div className="relative">
-                <input
-                  type="number"
+                <select
                   value={etiquetaId ?? ""}
-                  onChange={(e) => setEtiquetaId(Number(e.target.value))}
-                  className="input-base peer"
-                  placeholder=" "
-                />
-                <label className="label-base">ID de etiqueta</label>
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEtiquetaId(value ? Number(value) : null);
+                  }}
+                  className="select-base peer"
+                >
+                  <option value="">Sin etiqueta</option>
+                  {etiquetas.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.nombre}
+                    </option>
+                  ))}
+                </select>
+                <label className="label-base">Etiqueta</label>
               </div>
             </div>
 
-            {/* 📸 Columna derecha */}
+            {/* Columna derecha */}
             <div className="flex flex-col items-center justify-start gap-6">
-              {/* Imagen del producto */}
+              {/* Imagen */}
               <div className="flex flex-col items-center w-full">
                 <label className="text-sm mb-2 text-zinc-700 dark:text-zinc-300 font-semibold">
                   Imagen del producto
                 </label>
 
-                {/* Botones */}
                 <div className="flex justify-center items-center gap-3 mb-4">
                   <label className="flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer transition">
                     <Camera size={18} strokeWidth={1.8} />
@@ -307,7 +314,6 @@ export default function EditProductModal({
                   </label>
                 </div>
 
-                {/* Vista previa */}
                 {imagenPreview ? (
                   <img
                     src={imagenPreview}
@@ -395,7 +401,41 @@ export default function EditProductModal({
         </div>
       </Dialog>
 
-      {/* Confirmaciones (corregidas para texto visible en ambos modos) */}
+      {/* Confirmaciones (sin cambios visuales, solo limpieza lógica) */}
+      <Dialog
+        open={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+          <Dialog.Title className="text-lg font-bold text-center mb-4">
+            ¿Cancelar edición?
+          </Dialog.Title>
+          <p className="text-center text-sm mb-6">
+            Los cambios no guardados se perderán.
+          </p>
+          <div className="flex justify-center gap-3">
+            <button
+              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
+              onClick={() => setShowCancelConfirm(false)}
+            >
+              Volver
+            </button>
+            <button
+              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 rounded-lg font-semibold transition"
+              onClick={() => {
+                setShowCancelConfirm(false);
+                onClose();
+              }}
+            >
+              Sí, salir
+            </button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Confirmaciones (sin cambios visuales, solo limpieza lógica) */}
       <Dialog
         open={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
