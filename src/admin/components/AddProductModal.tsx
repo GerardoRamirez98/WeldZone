@@ -56,6 +56,19 @@ export default function AddProductModal({
   const [specFileUrl, setSpecFileUrl] = useState<string | null>(null);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
+  // 🧹 Función para limpiar formulario
+  const resetForm = () => {
+    setNombre("");
+    setDescripcion("");
+    setPrecio(0);
+    setCategoriaId(null);
+    setEtiquetaId(null);
+    setImagenFile(null);
+    if (imagenPreview) URL.revokeObjectURL(imagenPreview); // libera memoria
+    setImagenPreview(null);
+    setSpecFileUrl(null);
+  };
+
   // 🚀 Cargar categorías y etiquetas dinámicamente
   useEffect(() => {
     if (!isOpen) return;
@@ -74,10 +87,16 @@ export default function AddProductModal({
     fetchData();
   }, [isOpen]);
 
+  // 🧼 Limpia el formulario al cerrar el modal
+  useEffect(() => {
+    if (!isOpen) resetForm();
+  }, [isOpen]);
+
   // 📸 Subir imagen
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (imagenPreview) URL.revokeObjectURL(imagenPreview);
       setImagenFile(file);
       setImagenPreview(URL.createObjectURL(file));
       toast.success("📸 Imagen cargada correctamente");
@@ -133,7 +152,9 @@ export default function AddProductModal({
       const productoCreado = await createProduct(nuevoProducto as NewProduct);
       onAdd(productoCreado);
       toast.success("✅ Producto creado correctamente", { id: toastId });
-      onClose();
+
+      resetForm(); // 👈 limpia el formulario
+      onClose(); // 👈 cierra el modal
     } catch (err) {
       console.error(err);
       toast.error("❌ Error al crear producto", { id: toastId });
@@ -146,7 +167,10 @@ export default function AddProductModal({
     <>
       <Dialog
         open={isOpen}
-        onClose={onClose}
+        onClose={() => {
+          resetForm(); // limpia al cerrar manualmente
+          onClose();
+        }}
         className="fixed inset-0 z-50 flex items-center justify-center"
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
@@ -324,7 +348,10 @@ export default function AddProductModal({
           <div className="flex justify-end gap-2 mt-6">
             <button
               className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 transition text-sm"
-              onClick={onClose}
+              onClick={() => {
+                resetForm(); // limpia al cancelar
+                onClose();
+              }}
             >
               Cancelar
             </button>
