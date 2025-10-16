@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import type { Product, NewProduct } from "../../types/products";
@@ -57,7 +57,7 @@ export default function AddProductModal({
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   // 🧹 Función para limpiar formulario
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setNombre("");
     setDescripcion("");
     setPrecio(0);
@@ -67,7 +67,7 @@ export default function AddProductModal({
     if (imagenPreview) URL.revokeObjectURL(imagenPreview); // libera memoria
     setImagenPreview(null);
     setSpecFileUrl(null);
-  };
+  }, [imagenPreview]);
 
   // 🚀 Cargar categorías y etiquetas dinámicamente
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function AddProductModal({
   // 🧼 Limpia el formulario al cerrar el modal
   useEffect(() => {
     if (!isOpen) resetForm();
-  }, [isOpen]);
+  }, [isOpen, resetForm]);
 
   // 📸 Subir imagen
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
