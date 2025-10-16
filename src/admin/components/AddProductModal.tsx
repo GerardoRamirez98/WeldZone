@@ -187,8 +187,11 @@ export default function AddProductModal({
                 <input
                   type="number"
                   min="0"
-                  value={precio}
-                  onChange={(e) => setPrecio(parseFloat(e.target.value))}
+                  value={isNaN(precio) ? "" : precio}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPrecio(val === "" ? 0 : parseFloat(val));
+                  }}
                   className="input-base peer"
                   placeholder=" "
                 />
