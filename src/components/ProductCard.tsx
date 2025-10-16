@@ -16,29 +16,35 @@ export default function ProductCard({ product }: { product: Product }) {
     else document.body.classList.remove("modal-open");
   }, [open]);
 
-  // ⚡ Precarga la imagen grande para abrir el modal rápido
+  // ⚡ Precarga la imagen grande
   useEffect(() => {
     if (product.imagenUrl) {
       const img = new Image();
-      img.src = `${product.imagenUrl}?width=800&quality=80`;
+      img.src =
+        product.imagenUrl.replace("/object/public/", "/render/image/public/") +
+        "?width=800&quality=80&resize=contain";
     }
   }, [product.imagenUrl]);
 
-  // 💡 Skeleton loader suave
+  // 💡 Skeleton loader suave (fallback)
   const SkeletonImage = () => (
     <div className="h-full w-full rounded-xl bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800 animate-[pulse-soft_1.5s_ease-in-out_infinite]" />
   );
 
+  // 🔗 URL optimizada desde Supabase render endpoint
+  const baseRenderUrl = product.imagenUrl
+    ? product.imagenUrl.replace("/object/public/", "/render/image/public/")
+    : "";
+
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      {/* 🔹 Tarjeta principal */}
       <Dialog.Trigger asChild>
         <div
-          className={`group relative rounded-2xl border bg-white p-3 shadow-sm transition 
-            border-zinc-200 hover:shadow-md hover:scale-[1.01]
-            dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer`}
+          className="group relative rounded-2xl border bg-white p-3 shadow-sm transition 
+          border-zinc-200 hover:shadow-md hover:scale-[1.01]
+          dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer"
         >
-          {/* 🏷️ Etiqueta (oferta, nuevo, etc.) */}
+          {/* 🏷️ Etiqueta */}
           {product.etiqueta && (
             <div
               className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md
@@ -52,18 +58,29 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* 🖼️ Imagen del producto */}
-          <div className="aspect-square overflow-hidden rounded-xl">
+          {/* 🖼️ Imagen con blur-up progresivo */}
+          <div className="relative aspect-square overflow-hidden rounded-xl">
             {!imageLoaded && <SkeletonImage />}
+
+            {/* Miniatura borrosa (blur-up) */}
+            {product.imagenUrl && (
+              <img
+                src={`${baseRenderUrl}?width=20&quality=5&resize=contain`}
+                className="absolute inset-0 w-full h-full object-cover blur-lg scale-105"
+                aria-hidden="true"
+              />
+            )}
+
+            {/* Imagen final optimizada */}
             {product.imagenUrl ? (
               <img
-                src={`${product.imagenUrl}?width=400&quality=70`}
+                src={`${baseRenderUrl}?width=400&quality=70&resize=cover`}
                 alt={product.nombre}
-                className={`h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
                 loading="lazy"
                 onLoad={() => setImageLoaded(true)}
+                className={`relative z-10 h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.03] ${
+                  imageLoaded ? "blur-0 opacity-100" : "blur-md opacity-70"
+                }`}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-zinc-500 text-sm rounded-xl">
@@ -72,7 +89,7 @@ export default function ProductCard({ product }: { product: Product }) {
             )}
           </div>
 
-          {/* 📝 Info del producto */}
+          {/* 📝 Info */}
           <div className="mt-3">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
               {product.nombre}
@@ -87,7 +104,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </Dialog.Trigger>
 
-      {/* 🟢 Modal de detalles (solo se monta si está abierto) */}
+      {/* 🟢 Modal de detalles */}
       {open && (
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-all" />
@@ -100,7 +117,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <div className="relative">
               {product.imagenUrl && (
                 <img
-                  src={`${product.imagenUrl}?width=800&quality=80`}
+                  src={`${baseRenderUrl}?width=800&quality=80&resize=contain`}
                   alt={product.nombre}
                   className="w-full max-h-[400px] object-contain rounded-lg bg-white p-2 dark:bg-zinc-800"
                 />
@@ -127,20 +144,7 @@ export default function ProductCard({ product }: { product: Product }) {
               )}
             </div>
 
-            {/* Etiqueta visible en el modal */}
-            {product.etiqueta && (
-              <div
-                className="absolute left-3 top-3 z-20 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-md"
-                style={{
-                  backgroundColor: product.etiqueta?.color || "#777",
-                }}
-              >
-                <Tag className="h-3 w-3" />
-                {product.etiqueta?.nombre}
-              </div>
-            )}
-
-            {/* Información del producto */}
+            {/* Info modal */}
             <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-white">
               {product.nombre}
             </h2>
@@ -151,7 +155,7 @@ export default function ProductCard({ product }: { product: Product }) {
               ${product.precio.toLocaleString("es-MX")} MXN
             </p>
 
-            {/* 🔢 Contador de cantidad */}
+            {/* Cantidad */}
             <div className="mt-4 flex items-center gap-3">
               <label
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -178,7 +182,7 @@ export default function ProductCard({ product }: { product: Product }) {
               </label>
             </div>
 
-            {/* 💰 Total dinámico */}
+            {/* Total */}
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               Total:{" "}
               <span className="font-semibold text-yellow-600 dark:text-yellow-400">
@@ -186,7 +190,7 @@ export default function ProductCard({ product }: { product: Product }) {
               </span>
             </p>
 
-            {/* 🔹 Botones inferiores */}
+            {/* Botones */}
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <label
                 onClick={() => addToCart(product, quantity)}
