@@ -59,31 +59,31 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
 
           {/* 🖼️ Imagen con blur-up progresivo */}
-          <div className="relative aspect-square overflow-hidden rounded-xl">
+          <div className="relative aspect-square overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
             {!imageLoaded && <SkeletonImage />}
 
             {/* Miniatura borrosa (blur-up) */}
             {product.imagenUrl && (
               <img
-                src={`${baseRenderUrl}?width=20&quality=5&resize=contain`}
-                className="absolute inset-0 w-full h-full object-cover blur-lg scale-105"
+                src={`${baseRenderUrl}?width=30&quality=5&resize=contain`}
+                className="absolute inset-0 w-full h-full object-contain blur-lg scale-110"
                 aria-hidden="true"
               />
             )}
 
-            {/* Imagen final optimizada */}
+            {/* Imagen final optimizada y sin recorte */}
             {product.imagenUrl ? (
               <img
-                src={`${baseRenderUrl}?width=400&quality=70&resize=cover`}
+                src={`${baseRenderUrl}?width=400&quality=70&resize=contain`}
                 alt={product.nombre}
                 loading="lazy"
                 onLoad={() => setImageLoaded(true)}
-                className={`relative z-10 h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.03] ${
+                className={`relative z-10 max-w-full max-h-full object-contain transition-all duration-700 ease-out group-hover:scale-[1.02] ${
                   imageLoaded ? "blur-0 opacity-100" : "blur-md opacity-70"
                 }`}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-zinc-200 dark:bg-zinc-800 text-zinc-500 text-sm rounded-xl">
+              <div className="flex h-full w-full items-center justify-center text-zinc-500 text-sm">
                 Sin imagen
               </div>
             )}
