@@ -211,10 +211,20 @@ export default function AddProductModal({
                 <input
                   type="number"
                   min="0"
-                  value={isNaN(precio) ? "" : precio}
+                  value={precio === 0 ? "" : precio}
+                  onFocus={(e) => {
+                    // 🔹 Si el valor es 0, limpiar el input al enfocar
+                    if (precio === 0) e.target.value = "";
+                  }}
+                  onBlur={(e) => {
+                    // 🔹 Si el usuario deja vacío el campo, restaurar el 0
+                    if (e.target.value === "") setPrecio(0);
+                  }}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setPrecio(val === "" ? 0 : parseFloat(val));
+                    setPrecio(
+                      val === "" ? 0 : parseFloat(val.replace(/^0+/, ""))
+                    ); // quita ceros al inicio
                   }}
                   className="input-base peer"
                   placeholder=" "
