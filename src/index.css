@@ -16,6 +16,7 @@ body,
   height: 100%;
 }
 
+/* 🔄 Animaciones personalizadas */
 @keyframes pulse-soft {
 
   0%,
@@ -96,16 +97,14 @@ body.modal-open .group {
   transition: filter 0.3s ease;
 }
 
-/* Estilos base */
+/* 🎨 Estilos base modo oscuro fijo */
 :root {
+  color-scheme: dark;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -117,9 +116,8 @@ a {
 }
 
 a:hover {
-  @apply text-inherit;
+  @apply text-yellow-400;
 }
-
 
 body {
   margin: 0;
@@ -127,6 +125,7 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #242424;
 }
 
 h1 {
@@ -143,40 +142,32 @@ button {
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s;
   color: white;
 }
+
 button:hover {
-  border-color: #646cff;
+  border-color: #facc15;
+  /* amarillo Tailwind */
+  background-color: #272727;
 }
+
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid #facc15;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
+/* 🧱 Componentes base reutilizables */
 @layer components {
   .input-base {
-    @apply w-full p-2 pt-5 border-b-2 border-zinc-300 dark:border-zinc-600 bg-transparent focus:border-yellow-500 text-zinc-900 dark:text-zinc-100;
+    @apply w-full p-2 pt-5 border-b-2 border-zinc-600 bg-transparent focus:border-yellow-500 text-zinc-100 placeholder-zinc-500;
   }
 
   .select-base {
-    @apply w-full p-2 pt-5 border-b-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 focus:border-yellow-500 text-zinc-900 dark:text-zinc-100;
+    @apply w-full p-2 pt-5 border-b-2 border-zinc-600 bg-zinc-800 focus:border-yellow-500 text-zinc-100;
   }
 
   .label-base {
-    @apply absolute left-2 top-1 text-sm text-zinc-600 dark:text-zinc-400;
+    @apply absolute left-2 top-1 text-sm text-zinc-400;
   }
 }
