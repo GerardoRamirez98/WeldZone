@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
+import Nosotros from "./pages/Nosotros";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -10,9 +11,9 @@ import AdminLayout from "./admin/AdminLayout";
 import Dashboard from "./admin/pages/Dashboard";
 import Products from "./admin/pages/Products";
 import AdminConfig from "./admin/pages/AdminConfig";
+
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
-import Nosotros from "./pages/Nosotros";
 
 export default function App() {
   const location = useLocation();

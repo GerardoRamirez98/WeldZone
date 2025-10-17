@@ -1,7 +1,12 @@
 // src/pages/Nosotros.tsx
+import { useEffect } from "react";
 import { Factory, Shield, Wrench, Zap } from "lucide-react";
 
 export default function Nosotros() {
+  useEffect(() => {
+    document.title = "Nosotros | WeldZone";
+  }, []);
+
   return (
     <main className="container mx-auto px-4 py-16">
       {/* 🚀 Sección principal */}
