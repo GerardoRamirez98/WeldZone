@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
-import About from "./pages/About";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -13,6 +12,7 @@ import Products from "./admin/pages/Products";
 import AdminConfig from "./admin/pages/AdminConfig";
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
+import Nosotros from "./pages/Nosotros";
 
 export default function App() {
   const location = useLocation();
@@ -94,7 +94,7 @@ export default function App() {
         <Routes>
           {/* 🌐 Rutas públicas */}
           <Route path="/" element={<Catalogo />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/login" element={<Login />} />
 
           {/* 🛠️ Panel Admin protegido */}
