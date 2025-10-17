@@ -430,109 +430,195 @@ export default function EditProductModal({
       </Dialog>
 
       {/* Confirmación Guardar */}
-      <Dialog
-        open={showSaveConfirm}
-        onClose={() => setShowSaveConfirm(false)}
-        className="fixed inset-0 z-50 flex items-center justify-center"
-      >
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4">
-            ¿Guardar cambios?
-          </Dialog.Title>
-          <p className="text-center text-sm mb-6">
-            Se sobrescribirá la información del producto.
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
-              onClick={() => setShowSaveConfirm(false)}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleUpdate}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-yellow-500 text-black hover:bg-yellow-600 rounded-lg font-semibold transition"
-            >
-              {isSubmitting ? "Guardando..." : "Sí, guardar"}
-            </button>
+      {showSaveConfirm && (
+        <Dialog
+          open={showSaveConfirm}
+          onClose={() => setShowSaveConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+            <Dialog.Title className="text-lg font-bold text-center mb-4">
+              ¿Guardar cambios?
+            </Dialog.Title>
+            <p className="text-center text-sm mb-6">
+              Se sobrescribirá la información del producto.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
+                onClick={() => setShowSaveConfirm(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-yellow-500 text-black hover:bg-yellow-600 rounded-lg font-semibold transition"
+              >
+                {isSubmitting ? "Guardando..." : "Sí, guardar"}
+              </button>
+            </div>
           </div>
-        </div>
-      </Dialog>
+        </Dialog>
+      )}
 
       {/* Confirmación Cancelar */}
-      <Dialog
-        open={showCancelConfirm}
-        onClose={() => setShowCancelConfirm(false)}
-        className="fixed inset-0 z-50 flex items-center justify-center"
-      >
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4">
-            ¿Cancelar edición?
-          </Dialog.Title>
-          <p className="text-center text-sm mb-6">
-            Los cambios no guardados se perderán.
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
-              onClick={() => setShowCancelConfirm(false)}
-            >
-              Volver
-            </button>
-            <button
-              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold transition"
-              onClick={() => {
-                setShowCancelConfirm(false);
-                onClose();
-              }}
-            >
-              Sí, salir
-            </button>
+      {showCancelConfirm && (
+        <Dialog
+          open={showCancelConfirm}
+          onClose={() => setShowCancelConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+            <Dialog.Title className="text-lg font-bold text-center mb-4">
+              ¿Cancelar edición?
+            </Dialog.Title>
+            <p className="text-center text-sm mb-6">
+              Los cambios no guardados se perderán.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 rounded-lg transition"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                Volver
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold transition"
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  onClose();
+                }}
+              >
+                Sí, salir
+              </button>
+            </div>
           </div>
-        </div>
-      </Dialog>
+        </Dialog>
+      )}
+
+      {/* Confirmación Guardar */}
+      {showSaveConfirm && (
+        <Dialog
+          open={showSaveConfirm}
+          onClose={() => setShowSaveConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+            <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-white">
+              ¿Guardar cambios?
+            </Dialog.Title>
+            <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+              Se sobrescribirá la información del producto.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 
+                     dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-white 
+                     rounded-lg transition"
+                onClick={() => setShowSaveConfirm(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 
+                     text-black dark:text-black 
+                     rounded-lg font-semibold transition"
+              >
+                {isSubmitting ? "Guardando..." : "Sí, guardar"}
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+
+      {/* Confirmación Cancelar */}
+      {showCancelConfirm && (
+        <Dialog
+          open={showCancelConfirm}
+          onClose={() => setShowCancelConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+            <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-white">
+              ¿Cancelar edición?
+            </Dialog.Title>
+            <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+              Los cambios no guardados se perderán.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 
+                     dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-white 
+                     rounded-lg transition"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                Volver
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white 
+                     rounded-lg font-semibold transition"
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  onClose();
+                }}
+              >
+                Sí, salir
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      )}
 
       {/* Confirmación Eliminar */}
-      <Dialog
-        open={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        className="fixed inset-0 z-50 flex items-center justify-center"
-      >
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-          <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600">
-            ¿Eliminar producto?
-          </Dialog.Title>
-          <p className="text-center text-sm mb-6">
-            Estás a punto de eliminar{" "}
-            <span className="font-semibold text-red-500">
-              {producto?.nombre}
-            </span>
-            . Esta acción no se puede deshacer.
-          </p>
-          <div className="flex justify-center gap-3">
-            <button
-              className="px-4 py-2 bg-zinc-200 text-zinc-800 hover:bg-zinc-300 rounded-lg transition"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
-              Cancelar
-            </button>
-            <button
-              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-lg font-semibold transition"
-              onClick={() => {
-                onDelete(producto.id);
-                setShowDeleteConfirm(false);
-                onClose();
-              }}
-            >
-              Sí, eliminar
-            </button>
+      {showDeleteConfirm && (
+        <Dialog
+          open={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
+            <Dialog.Title className="text-lg font-bold text-center mb-4 text-red-600 dark:text-red-400">
+              ¿Eliminar producto?
+            </Dialog.Title>
+            <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
+              Estás a punto de eliminar{" "}
+              <span className="font-semibold text-red-600 dark:text-red-400">
+                {producto?.nombre}
+              </span>
+              . Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                className="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 
+                     dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-white 
+                     rounded-lg transition"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white 
+                     rounded-lg font-semibold transition"
+                onClick={() => {
+                  onDelete(producto.id);
+                  setShowDeleteConfirm(false);
+                  onClose();
+                }}
+              >
+                Sí, eliminar
+              </button>
+            </div>
           </div>
-        </div>
-      </Dialog>
+        </Dialog>
+      )}
     </>
   );
 }
