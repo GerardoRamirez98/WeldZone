@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import logoDark from "../assets/logo-dark.png";
 import logoLight from "../assets/logo-light.png";
+import EstadoTienda from "./EstadoTienda";
 
 export default function Header({
   onSearch,
@@ -26,18 +27,21 @@ export default function Header({
         {/* Logo dinámico */}
         <Link
           to="/"
-          className="flex items-center gap-2 hover:scale-105 transition-transform"
+          className="flex flex-col items-start gap-1 hover:scale-105 transition-transform"
         >
-          <img
-            src={logoDark}
-            alt="WeldZone Logo"
-            className="h-12 w-auto object-contain dark:hidden"
-          />
-          <img
-            src={logoLight}
-            alt="WeldZone Logo"
-            className="h-12 w-auto object-contain hidden dark:block"
-          />
+          <div className="flex items-center gap-2">
+            <img
+              src={logoDark}
+              alt="WeldZone Logo"
+              className="h-12 w-auto object-contain dark:hidden"
+            />
+            <img
+              src={logoLight}
+              alt="WeldZone Logo"
+              className="h-12 w-auto object-contain hidden dark:block"
+            />
+          </div>
+          <EstadoTienda />
         </Link>
 
         {/* Navegación desktop (línea amarilla animada) */}
@@ -88,9 +92,9 @@ export default function Header({
           <ThemeToggle />
           <Dialog.Root>
             <Dialog.Trigger asChild>
-              <button className="p-2.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors">
+              <label className="p-2.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors">
                 <Menu className="h-5 w-5" />
-              </button>
+              </label>
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
@@ -111,9 +115,9 @@ export default function Header({
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-lg font-bold">Menú</span>
                   <Dialog.Close asChild>
-                    <button className="p-2 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
+                    <label className="p-2 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
                       <X className="h-5 w-5" />
-                    </button>
+                    </label>
                   </Dialog.Close>
                 </div>
 

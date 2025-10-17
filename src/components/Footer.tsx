@@ -1,44 +1,82 @@
-import { MapPin, Mail, Phone } from "lucide-react";
+import { MapPin, Mail, Phone, Clock } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
-import welderImg from "../assets/welder.png"; // 👈 tu imagen aquí
+import welderImg from "../assets/welder.png";
 
 export default function Footer() {
   return (
-    <footer className="bg-zinc-950 text-zinc-300 border-t-4 border-yellow-500">
-      <div className="container mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 items-start">
-        {/* 🧱 Columna 1 - Imagen destacada */}
-        <div className="flex items-center justify-center lg:justify-start">
-          <div className="relative w-40 h-40 flex items-center justify-center">
-            {/* 🔵 Círculo amarillo detrás */}
-            <div className="absolute inset-0 bg-yellow-500 rounded-full scale-110 blur-[2px] opacity-90" />
-
-            {/* 🧰 Imagen de soldador */}
+    <footer className="bg-zinc-950 text-zinc-300 border-t border-yellow-600/60 shadow-[0_-2px_15px_rgba(255,193,7,0.1)]">
+      <div className="container mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 items-start">
+        {/* 🧰 Logo / Branding */}
+        <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+          <div className="relative w-32 h-32 mb-3">
+            <div className="absolute inset-0 bg-yellow-500 rounded-full blur-[2px] opacity-90" />
             <img
               src={welderImg}
               alt="Soldador profesional"
-              className="relative z-10 w-32 h-32 object-contain drop-shadow-xl"
+              className="relative z-10 w-28 h-28 object-contain mx-auto"
             />
           </div>
-        </div>
-
-        {/* 🧱 Columna 2 - Branding */}
-        <div>
-          <h2 className="text-yellow-500 text-2xl font-bold mb-4">WeldZone</h2>
-          <p className="text-sm leading-relaxed text-zinc-400 max-w-xs">
+          <h2 className="text-yellow-500 text-xl font-bold mb-2">WeldZone</h2>
+          <p className="text-sm text-zinc-400 leading-relaxed max-w-xs">
             Potencia y calidad para el soldador profesional. Equipos,
             consumibles y protección diseñados para durar.
           </p>
         </div>
 
-        {/* 📲 Columna 3 - Redes sociales */}
+        {/* 🕒 Horarios */}
         <div>
-          <h3 className="text-yellow-500 font-semibold mb-4">Síguenos</h3>
-          <div className="flex space-x-4 text-2xl">
+          <h3 className="text-yellow-400 font-semibold mb-3 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-yellow-500" /> Horarios de atención
+          </h3>
+
+          <ul className="text-sm text-zinc-400 space-y-2">
+            <li>
+              <strong className="text-zinc-200 block">Lunes a Viernes:</strong>
+              <div className="grid gap-x-4 pl-1">
+                <span>8:00 a.m. – 1:00 p.m.</span>
+                <span>2:00 p.m. – 5:00 p.m.</span>
+              </div>
+            </li>
+            <li>
+              <strong className="text-zinc-200 block">Sábado:</strong>
+              <div className="pl-1">9:00 a.m. – 1:00 p.m.</div>
+            </li>
+            <li>
+              <strong className="text-zinc-200 block">Domingo:</strong>
+              <div className="pl-1">Cerrado</div>
+            </li>
+          </ul>
+        </div>
+
+        {/* 📞 Contacto */}
+        <div>
+          <h3 className="text-yellow-400 font-semibold mb-3">Contáctanos</h3>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-yellow-500" /> 474 117 8597
+            </li>
+            <li className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-yellow-500" />{" "}
+              weldzonealtos@gmail.com
+            </li>
+            <li className="flex items-start gap-2">
+              <MapPin className="w-4 h-4 mt-1 text-yellow-500" />
+              Margarito González Rubio #1195C
+              <br />
+              El Refugio, Lagos de Moreno, Jalisco
+            </li>
+          </ul>
+        </div>
+
+        {/* 🌐 Redes sociales */}
+        <div>
+          <h3 className="text-yellow-400 font-semibold mb-3">Síguenos</h3>
+          <div className="flex space-x-4 text-xl">
             <a
               href="https://www.facebook.com/profile.php?id=61579354317811"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-yellow-500 transition-colors"
+              className="hover:text-yellow-400 transition-colors"
             >
               <FaFacebookF />
             </a>
@@ -46,7 +84,7 @@ export default function Footer() {
               href="https://www.instagram.com/weldzone.mx/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-yellow-500 transition-colors"
+              className="hover:text-yellow-400 transition-colors"
             >
               <FaInstagram />
             </a>
@@ -59,24 +97,6 @@ export default function Footer() {
               <FaWhatsapp />
             </a>
           </div>
-        </div>
-
-        {/* 📬 Columna 4 - Contacto */}
-        <div>
-          <h3 className="text-yellow-500 font-semibold mb-4">Contáctanos</h3>
-          <ul className="space-y-3 text-sm">
-            <li className="flex items-center gap-2">
-              <Phone className="w-4 h-4" /> 474 117 8597
-            </li>
-            <li className="flex items-center gap-2">
-              <Mail className="w-4 h-4" /> weldzonealtos@gmail.com
-            </li>
-            <li className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 mt-1" /> Margarito González Rubio
-              #1195C
-              <br /> El Refugio, Lagos de Moreno, Jalisco
-            </li>
-          </ul>
         </div>
       </div>
 

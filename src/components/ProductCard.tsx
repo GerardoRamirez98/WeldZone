@@ -116,9 +116,18 @@ export default function ProductCard({ product }: { product: Product }) {
           <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-all" />
           <Dialog.Content
             className="fixed left-1/2 top-1/2 w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 
-              rounded-2xl border bg-white p-5 shadow-2xl border-zinc-200 
-              dark:border-zinc-800 dark:bg-zinc-900"
+    rounded-2xl border bg-white p-5 shadow-2xl border-zinc-200 
+    dark:border-zinc-800 dark:bg-zinc-900"
           >
+            {/* ♿️ Accesibilidad para Radix */}
+            <Dialog.Title className="sr-only">
+              Detalles del producto
+            </Dialog.Title>
+            <Dialog.Description className="sr-only">
+              Información detallada del producto seleccionado, incluyendo
+              imagen, descripción y precio.
+            </Dialog.Description>
+
             {/* 🖼️ Imagen grande */}
             <div className="relative">
               {product.imagenUrl && (
@@ -141,9 +150,9 @@ export default function ProductCard({ product }: { product: Product }) {
                     )
                   }
                   className="absolute bottom-3 right-3 z-20 flex items-center justify-center
-                    w-10 h-10 rounded-full bg-yellow-500 hover:bg-yellow-400 
-                    shadow-md transition active:scale-95 hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
-                    animate-[pulse-soft_3s_ease-in-out_infinite]"
+          w-10 h-10 rounded-full bg-yellow-500 hover:bg-yellow-400 
+          shadow-md transition active:scale-95 hover:shadow-[0_0_10px_2px_rgba(255,213,0,0.6)]
+          animate-[pulse-soft_3s_ease-in-out_infinite]"
                 >
                   <FileText className="w-5 h-5 text-white" strokeWidth={2.2} />
                 </label>
@@ -166,9 +175,9 @@ export default function ProductCard({ product }: { product: Product }) {
               <label
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 className="p-2 rounded-md border transition 
-                  border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
-                  dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 
-                  shadow-sm active:scale-95 cursor-pointer"
+        border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
+        dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 
+        shadow-sm active:scale-95 cursor-pointer"
               >
                 <Minus className="w-4 h-4 text-zinc-800 dark:text-zinc-100" />
               </label>
@@ -180,9 +189,9 @@ export default function ProductCard({ product }: { product: Product }) {
               <label
                 onClick={() => setQuantity((q) => q + 1)}
                 className="p-2 rounded-md border transition 
-                  border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
-                  dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 
-                  shadow-sm active:scale-95 cursor-pointer"
+        border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
+        dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 
+        shadow-sm active:scale-95 cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-zinc-800 dark:text-zinc-100" />
               </label>
@@ -201,14 +210,14 @@ export default function ProductCard({ product }: { product: Product }) {
               <label
                 onClick={() => addToCart(product, quantity)}
                 className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 
-               text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
+        text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
               >
                 <ShoppingCart className="w-4 h-4" /> Agregar al carrito
               </label>
 
               <Dialog.Close
                 className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium 
-                          text-white hover:bg-zinc-700 transition"
+        text-white hover:bg-zinc-700 transition"
               >
                 Cerrar
               </Dialog.Close>
