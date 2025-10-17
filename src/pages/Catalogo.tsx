@@ -15,6 +15,11 @@ export default function Catalogo() {
     number | null
   >(null);
 
+  // 🧠 Siempre al montar o recargar, forzamos la selección "Todas"
+  useEffect(() => {
+    setCategoriaSeleccionada(null);
+  }, []);
+
   const { products, loading, error } = useProducts();
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -24,7 +29,7 @@ export default function Catalogo() {
       .then((r) => r.json())
       .then(setCategorias)
       .catch((err) => console.error("❌ Error al cargar categorías:", err));
-  }, []);
+  }, [API_URL]);
 
   // 🔎 Filtrar productos según búsqueda y categoría
   const filtered: Product[] = useMemo(() => {

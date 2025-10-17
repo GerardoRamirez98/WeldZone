@@ -69,7 +69,10 @@ export default function SidebarCategorias({
                       : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                   }`}
               >
-                <span className="truncate">{cat.nombre}</span>
+                <span className="truncate">
+                  {cat.nombre.charAt(0).toUpperCase() +
+                    cat.nombre.slice(1).toLowerCase()}
+                </span>
                 <ChevronRight className="w-4 h-4 opacity-50" />
               </button>
             </li>
