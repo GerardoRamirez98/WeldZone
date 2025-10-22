@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
-import type { Product, NewProduct } from "../../types/products";
-import { createProduct } from "../../api/products.api";
+import type { NewProduct } from "../../types/products";
 import { toast } from "sonner";
+import { useCreateProduct } from "../../hooks/useProducts";
+import { useApi } from "../../hooks/useApi"; // 👈 para subir archivos con control global
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -21,31 +22,27 @@ interface Etiqueta {
 interface AddProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (producto: Product) => void;
 }
 
 export default function AddProductModal({
   isOpen,
   onClose,
-  onAdd,
 }: AddProductModalProps) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precio, setPrecio] = useState<number>(0);
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [etiquetaId, setEtiquetaId] = useState<number | null>(null);
-
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
-
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [imagenPreview, setImagenPreview] = useState<string | null>(null);
-
-  // 🔹 Nuevo: mantenemos el archivo de especificaciones localmente
   const [specFile, setSpecFile] = useState<File | null>(null);
-
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { request } = useApi(); // 🔥 Subidas con control global
+  const { mutateAsync: createProduct } = useCreateProduct(); // React Query hook
 
   // 🧹 Reset form
   const resetForm = useCallback(() => {
@@ -83,7 +80,7 @@ export default function AddProductModal({
     if (!isOpen) resetForm();
   }, [isOpen, resetForm]);
 
-  // 📸 Seleccionar imagen (sin subir aún)
+  // 📸 Seleccionar imagen
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -94,7 +91,7 @@ export default function AddProductModal({
     }
   };
 
-  // 📄 Seleccionar archivo (sin subir aún)
+  // 📄 Seleccionar archivo de especificaciones
   const handleSpecSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -124,35 +121,32 @@ export default function AddProductModal({
       let imagenUrl: string | undefined;
       let specFileUrl: string | undefined;
 
-      // 🔹 Subir imagen al guardar
+      // 🔹 Subir imagen
       if (imagenFile) {
         const formData = new FormData();
         formData.append("file", imagenFile);
-        const res = await fetch(`${API_URL}/upload`, {
+        const data = await request(`${API_URL}/upload`, {
           method: "POST",
           body: formData,
+          headers: {},
         });
-        if (!res.ok) throw new Error("Error al subir la imagen");
-        const data = await res.json();
         imagenUrl = data.url;
       }
 
-      // 🔹 Subir archivo de especificaciones al guardar
+      // 🔹 Subir especificación
       if (specFile) {
         const formData = new FormData();
         formData.append("file", specFile);
-        const res = await fetch(`${API_URL}/upload-specs`, {
+        const data = await request(`${API_URL}/upload-specs`, {
           method: "POST",
           body: formData,
+          headers: {},
         });
-        if (!res.ok)
-          throw new Error("Error al subir archivo de especificaciones");
-        const data = await res.json();
         specFileUrl = data.url;
       }
 
       // 🧩 Crear producto final
-      const nuevoProducto: Partial<Product> = {
+      const nuevoProducto: NewProduct = {
         nombre,
         descripcion,
         precio,
@@ -163,10 +157,9 @@ export default function AddProductModal({
         estado: "activo",
       };
 
-      const productoCreado = await createProduct(nuevoProducto as NewProduct);
-      onAdd(productoCreado);
-      toast.success("✅ Producto creado correctamente", { id: toastId });
+      await createProduct(nuevoProducto);
 
+      toast.success("✅ Producto creado correctamente", { id: toastId });
       resetForm();
       onClose();
     } catch (err) {

@@ -1,39 +1,43 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AddProductModal from "../components/AddProductModal";
 import EditProductModal from "../components/EditProductModal";
 import { Dialog } from "@headlessui/react";
 import type { Product } from "../../types/products";
-import { getProducts, deleteProduct } from "../../api/products.api";
+import { useProducts, useDeleteProduct } from "../../hooks/useProducts";
 import { toast } from "sonner";
 import { FileText, Tag } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>([]);
+  // 🧩 React Query hooks
+  const { products, loading, error } = useProducts();
+  const { mutate: deleteProduct } = useDeleteProduct();
+
+  // 🧠 Estados locales (solo UI)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [productoEdit, setProductoEdit] = useState<Product | null>(null);
   const [productoDelete, setProductoDelete] = useState<Product | null>(null);
 
-  // 🚀 Cargar productos desde el backend
-  useEffect(() => {
-    getProducts()
-      .then(setProducts)
-      .catch(() => {
-        toast.error("❌ Error al cargar productos desde el servidor");
-        setProducts([]);
-      });
-  }, []);
-
-  const handleAddProduct = (nuevo: Product) =>
-    setProducts((prev) => [...prev, nuevo]);
-
-  const handleUpdateProduct = (actualizado: Product) =>
-    setProducts((prev) =>
-      prev.map((p) => (p.id === actualizado.id ? actualizado : p))
+  // ✅ Loader / error
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-96 text-zinc-400">
+        Cargando productos...
+      </div>
     );
 
-  const handleDeleteProduct = (id: number) =>
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  if (error)
+    return (
+      <div className="flex flex-col justify-center items-center h-96 text-red-400">
+        <p>❌ Error al cargar productos.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-3 bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-400"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
 
   return (
     <div>
@@ -171,7 +175,6 @@ export default function Products() {
       <AddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddProduct}
       />
 
       {/* ✏️ Modal Editar */}
@@ -180,11 +183,6 @@ export default function Products() {
           isOpen={!!productoEdit}
           onClose={() => setProductoEdit(null)}
           producto={productoEdit}
-          onUpdate={handleUpdateProduct}
-          onDelete={(id) => {
-            handleDeleteProduct(id);
-            setProductoEdit(null);
-          }}
         />
       )}
 
@@ -211,18 +209,17 @@ export default function Products() {
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm font-semibold"
-              onClick={async () => {
+              onClick={() => {
                 if (!productoDelete?.id) return;
-
-                try {
-                  await deleteProduct(productoDelete.id);
-                  handleDeleteProduct(productoDelete.id);
-                  toast.success("🗑️ Producto eliminado correctamente");
-                } catch {
-                  toast.error("No se pudo eliminar el producto");
-                } finally {
-                  setProductoDelete(null);
-                }
+                deleteProduct(productoDelete.id, {
+                  onSuccess: () => {
+                    toast.success("🗑️ Producto eliminado correctamente");
+                    setProductoDelete(null);
+                  },
+                  onError: () => {
+                    toast.error("No se pudo eliminar el producto");
+                  },
+                });
               }}
             >
               Sí, eliminar

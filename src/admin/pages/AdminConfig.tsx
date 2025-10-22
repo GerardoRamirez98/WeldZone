@@ -15,6 +15,8 @@ export default function AdminConfig() {
   const [whatsapp, setWhatsapp] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [maintenance, setMaintenance] = useState(false);
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false);
 
   // Estados dinámicos
   const [categorias, setCategorias] = useState<
@@ -51,19 +53,22 @@ export default function AdminConfig() {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        const [configRes, catRes, etqRes] = await Promise.all([
+        const [configRes, catRes, etqRes, maintRes] = await Promise.all([
           fetch(`${API_URL}/config`),
           fetch(`${API_URL}/config/categorias`),
           fetch(`${API_URL}/config/etiquetas`),
+          fetch(`${API_URL}/config/mantenimiento`),
         ]);
 
         const config = await configRes.json();
         const categoriasData = await catRes.json();
         const etiquetasData = await etqRes.json();
+        const mantenimientoData = await maintRes.json();
 
         setWhatsapp(config.whatsapp || "");
         setCategorias(categoriasData);
         setEtiquetas(etiquetasData);
+        setMaintenance(mantenimientoData.mantenimiento);
       } catch {
         toast.error("❌ Error al cargar configuración");
       } finally {
@@ -90,6 +95,30 @@ export default function AdminConfig() {
       toast.error("❌ Error al guardar número");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // 🛠️ Alternar modo mantenimiento
+  const handleToggleMaintenance = async () => {
+    try {
+      setLoadingMaintenance(true);
+      const newState = !maintenance;
+      const res = await fetch(`${API_URL}/config/mantenimiento`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mantenimiento: newState }),
+      });
+      if (!res.ok) throw new Error();
+      setMaintenance(newState);
+      toast.success(
+        newState
+          ? "🛠️ Modo mantenimiento activado"
+          : "✅ Modo mantenimiento desactivado"
+      );
+    } catch {
+      toast.error("❌ Error al cambiar estado de mantenimiento");
+    } finally {
+      setLoadingMaintenance(false);
     }
   };
 
@@ -233,6 +262,35 @@ export default function AdminConfig() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Configuración del Sistema</h1>
+
+      {/* 🔹 Modo Mantenimiento */}
+      <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            🛠️ Modo mantenimiento
+          </h2>
+          <button
+            onClick={handleToggleMaintenance}
+            disabled={loadingMaintenance}
+            className={`px-4 py-2 rounded-md font-medium transition ${
+              maintenance
+                ? "bg-yellow-500 hover:bg-yellow-600 text-black"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white"
+            }`}
+          >
+            {loadingMaintenance
+              ? "Cambiando..."
+              : maintenance
+              ? "Desactivar"
+              : "Activar"}
+          </button>
+        </div>
+        <p className="text-sm text-zinc-500">
+          {maintenance
+            ? "El sitio público está actualmente en modo mantenimiento."
+            : "El sitio está visible para todos los visitantes."}
+        </p>
+      </div>
 
       {/* 🔹 WhatsApp */}
       <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">

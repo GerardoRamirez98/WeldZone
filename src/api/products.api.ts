@@ -1,54 +1,67 @@
+import { useApi } from "../hooks/useApi";
 import type { Product, NewProduct } from "../types/products";
 
-// ✅ URL base del backend
+// ✅ URL base del backend (puede ser local o de producción)
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-// 📥 Obtener todos los productos
-export async function getProducts(): Promise<Product[]> {
-  const res = await fetch(`${API_URL}/products`);
-  if (!res.ok) throw new Error("Error al obtener productos");
-  return res.json();
-}
+/**
+ * Hook API para manejar productos con control de errores global
+ * a través de useApi().
+ */
+export function useProductsApi() {
+  const { request } = useApi();
 
-// 📤 Crear un nuevo producto
-export async function createProduct(product: NewProduct): Promise<Product> {
-  const res = await fetch(`${API_URL}/products`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
-  });
+  // 📥 Obtener todos los productos
+  const getProducts = async (): Promise<Product[]> => {
+    return await request(`${API_URL}/products`);
+  };
 
-  // 🔍 Si falla, muestra respuesta completa del backend
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Error al crear producto: ${res.status} - ${errorText}`);
-  }
+  // 📤 Crear un nuevo producto
+  const createProduct = async (product: NewProduct): Promise<Product> => {
+    return await request(`${API_URL}/products`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(product),
+    });
+  };
 
-  return res.json();
-}
+  // ✏️ Actualizar un producto
+  const updateProduct = async (
+    id: number,
+    product: Partial<Product>
+  ): Promise<Product> => {
+    return await request(`${API_URL}/products/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(product),
+    });
+  };
 
-// ✏️ Actualizar un producto
-export async function updateProduct(
-  id: number,
-  product: Partial<Product>
-): Promise<Product> {
-  const res = await fetch(`${API_URL}/products/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
-  });
+  // 🗑️ Eliminar un producto
+  const deleteProduct = async (id: number): Promise<void> => {
+    await request(`${API_URL}/products/${id}`, {
+      method: "DELETE",
+    });
+  };
 
-  if (!res.ok) throw new Error("Error al actualizar producto");
-  return res.json();
-}
+  // 🖼️ Subir imagen (opcional)
+  const uploadProductImage = async (file: File, productId: number) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("productId", String(productId));
 
-// 🗑️ Eliminar un producto
-export async function deleteProduct(id: number): Promise<void> {
-  const res = await fetch(`${API_URL}/products/${id}`, {
-    method: "DELETE",
-  });
+    return await request(`${API_URL}/products/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {}, // ⚠️ No definas Content-Type, el navegador lo hace
+    });
+  };
 
-  if (!res.ok) {
-    throw new Error(`Error al eliminar producto ${id}`);
-  }
+  return {
+    getProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    uploadProductImage, // opcional
+  };
 }

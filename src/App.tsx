@@ -6,7 +6,6 @@ import Nosotros from "./pages/Nosotros";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Admin imports
 import AdminLayout from "./admin/AdminLayout";
 import Dashboard from "./admin/pages/Dashboard";
 import Products from "./admin/pages/Products";
@@ -15,16 +14,43 @@ import AdminConfig from "./admin/pages/AdminConfig";
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
 
+// ⚠️ Importa tus páginas de error
+import Error404 from "./pages/errors/Error404";
+import Error503 from "./pages/errors/Error503";
+import Error500 from "./pages/errors/Error500";
+
 export default function App() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith("/admin");
   const isCatalogo = location.pathname === "/";
-  const isLogin = location.pathname === "/login"; // ✅ Detectamos si estamos en login
+  const isLogin = location.pathname === "/login";
 
   const [showFooter, setShowFooter] = useState(false);
   const [pageChange, setPageChange] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false); // 👈 Nuevo flag
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  // 🧩 Control de modo mantenimiento (puede venir de Supabase o variable de entorno)
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    const fetchMaintenance = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/config/mantenimiento`
+        );
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setMaintenanceMode(data.mantenimiento);
+      } catch (err) {
+        console.warn("No se pudo verificar modo mantenimiento", err);
+      }
+    };
+
+    fetchMaintenance(); // primera carga
+    const interval = setInterval(fetchMaintenance, 10000); // cada 10 s
+    return () => clearInterval(interval);
+  }, []);
 
   // 📍 Detectar scroll solo en catálogo
   useEffect(() => {
@@ -53,7 +79,6 @@ export default function App() {
       return;
     }
 
-    // Mostrar loader solo una vez al entrar por primera vez
     if (!hasLoaded) {
       setShowLoader(true);
       const timeout = setTimeout(() => {
@@ -93,24 +118,34 @@ export default function App() {
       {/* 📦 Rutas */}
       <main className="flex-1">
         <Routes>
-          {/* 🌐 Rutas públicas */}
-          <Route path="/" element={<Catalogo />} />
-          <Route path="/nosotros" element={<Nosotros />} />
-          <Route path="/login" element={<Login />} />
+          {/* 🛠️ Página de mantenimiento */}
+          {maintenanceMode && !isAdmin ? (
+            <Route path="*" element={<Error503 />} />
+          ) : (
+            <>
+              {/* 🌐 Rutas públicas */}
+              <Route path="/" element={<Catalogo />} />
+              <Route path="/nosotros" element={<Nosotros />} />
+              <Route path="/login" element={<Login />} />
 
-          {/* 🛠️ Panel Admin protegido */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="products" element={<Products />} />
-            <Route path="config" element={<AdminConfig />} />
-          </Route>
+              {/* 🛠️ Panel Admin protegido */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Dashboard />} />
+                <Route path="products" element={<Products />} />
+                <Route path="config" element={<AdminConfig />} />
+              </Route>
+
+              <Route path="/error-500" element={<Error500 />} />
+              <Route path="*" element={<Error404 />} />
+            </>
+          )}
         </Routes>
       </main>
 
