@@ -7,6 +7,7 @@ import type { Product } from "@/types/products";
 import CartFloatingButton from "../components/CartFloatingButton";
 import SidebarCategorias from "../components/SidebarCategorias";
 import { useCategorias } from "@/hooks/useCategories";
+import { exportProductsPdf } from "@/utils/pdf";
 
 export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,6 +43,16 @@ export default function Catalogo() {
 
   const categoriaActual = categoriaSeleccionada === null ? null : categoriasConProductos.find((c) => c.id === categoriaSeleccionada);
 
+  const handleExport = async () => {
+    try {
+      await exportProductsPdf(filtered, {
+        title: "Listado de productos",
+      });
+    } catch (e) {
+      console.error("No se pudo exportar el PDF", e);
+    }
+  };
+
   if (error) {
     return (
       <main className="container py-6 text-center text-red-500">Error al cargar productos. Intenta de nuevo más tarde.</main>
@@ -57,6 +68,7 @@ export default function Catalogo() {
         totalProductos={filtered.length}
         categoriaActualNombre={categoriaActual?.nombre || null}
         loading={loading || loadingCategorias}
+        onExport={filtered.length > 0 ? handleExport : undefined}
       />
 
       <div className="flex-1">
@@ -111,4 +123,3 @@ export default function Catalogo() {
     </main>
   );
 }
-

@@ -14,6 +14,7 @@ interface SidebarCategoriasProps {
   totalProductos?: number;
   categoriaActualNombre?: string | null;
   loading?: boolean;
+  onExport?: () => void; // descarga de listado (opcional)
 }
 
 export default function SidebarCategorias({
@@ -23,16 +24,18 @@ export default function SidebarCategorias({
   totalProductos = 0,
   categoriaActualNombre,
   loading = false,
+  onExport,
 }: SidebarCategoriasProps) {
   const [open, setOpen] = useState(false);
 
-  // 💡 Versión desktop
+  // Versión desktop
   const DesktopSidebar = (
     <aside className="hidden md:block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow-sm w-64">
-      <Header
+      <HeaderSection
         categoriaActualNombre={categoriaActualNombre}
         totalProductos={totalProductos}
         loading={loading}
+        onExport={onExport}
       />
       <CategoryList
         categorias={categorias}
@@ -42,7 +45,7 @@ export default function SidebarCategorias({
     </aside>
   );
 
-  // 📱 Versión móvil (botón + modal)
+  // Versión móvil (botón + modal)
   const MobileDrawer = (
     <>
       {/* Botón abrir filtro */}
@@ -58,10 +61,7 @@ export default function SidebarCategorias({
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm">
           {/* Fondo clicable */}
-          <div
-            className="absolute inset-0"
-            onClick={() => setOpen(false)}
-          ></div>
+          <div className="absolute inset-0" onClick={() => setOpen(false)}></div>
 
           {/* Panel lateral */}
           <div className="relative z-10 w-4/5 max-w-sm bg-white dark:bg-zinc-900 p-5 shadow-2xl rounded-l-2xl overflow-y-auto">
@@ -75,6 +75,17 @@ export default function SidebarCategorias({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Botón de descarga en móvil */}
+            {onExport && (
+              <button
+                type="button"
+                onClick={onExport}
+                className="mb-4 w-full bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 active:scale-[.99] transition"
+              >
+                Descargar listado (PDF)
+              </button>
+            )}
 
             <CategoryList
               categorias={categorias}
@@ -98,31 +109,48 @@ export default function SidebarCategorias({
   );
 }
 
-/* 🏷️ Encabezado */
-function Header({
+/* Encabezado */
+function HeaderSection({
   categoriaActualNombre,
   totalProductos,
   loading,
+  onExport,
 }: {
   categoriaActualNombre?: string | null;
   totalProductos: number;
   loading: boolean;
+  onExport?: () => void;
 }) {
   return (
     <div className="mb-5 border-b border-zinc-200 dark:border-zinc-700 pb-3">
-      <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">
-        {categoriaActualNombre || "Catálogo"}
-      </h2>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-        {loading
-          ? "Cargando productos..."
-          : `${totalProductos} resultado${totalProductos !== 1 ? "s" : ""}`}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-tight truncate" title={categoriaActualNombre || 'Catálogo'}>
+            {categoriaActualNombre || "Catálogo"}
+          </h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            {loading
+              ? "Cargando productos..."
+              : `${totalProductos} resultado${totalProductos !== 1 ? "s" : ""}`}
+          </p>
+        </div>
+        {typeof onExport === "function" && (
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={loading || totalProductos === 0}
+            className="ml-auto shrink-0 whitespace-nowrap bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-indigo-700 transition"
+            title="Descargar listado filtrado en PDF"
+          >
+            Descargar PDF
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
-/* 📁 Lista de categorías */
+/* Lista de categorías */
 function CategoryList({
   categorias,
   categoriaSeleccionada,
@@ -142,7 +170,7 @@ function CategoryList({
 
   return (
     <div>
-      {/* 🔝 “Todas” */}
+      {/* "Todas" */}
       <button
         type="button"
         onClick={() => onSelect(null)}
