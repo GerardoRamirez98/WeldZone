@@ -43,8 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ✅ Logout
   const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+    fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    }).finally(() => {
+      localStorage.removeItem('token');
+      setUser(null);
+    });
   };
 
   const value: AuthContextType = {

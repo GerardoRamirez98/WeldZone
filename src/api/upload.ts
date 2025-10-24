@@ -13,6 +13,10 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
     method: "POST",
     body: form,
     credentials: "include",
+    headers: (() => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    })(),
   });
 
   if (!res.ok) {

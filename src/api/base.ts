@@ -23,7 +23,17 @@ async function handle<T>(res: Response): Promise<T> {
 }
 
 export async function http<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, withAuth(init));
+  const url = `${API_URL}${path}`;
+
+  const doFetch = () => fetch(url, withAuth(init));
+
+  let res = await doFetch();
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      res = await doFetch();
+    }
+  }
   return handle<T>(res);
 }
 
@@ -42,3 +52,23 @@ export const put = <T,>(path: string, body: unknown) =>
   });
 export const del = <T,>(path: string) => http<T>(path, { method: "DELETE" });
 
+let refreshPromise: Promise<string | null> | null = null;
+async function tryRefreshToken(): Promise<boolean> {
+  const start = () =>
+    fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        const data = (await r.json()) as { access_token?: string };
+        const token = data?.access_token ?? null;
+        if (token) localStorage.setItem("token", token);
+        return token;
+      })
+      .catch(() => null);
+
+  if (!refreshPromise) refreshPromise = start();
+  const token = await refreshPromise.finally(() => (refreshPromise = null));
+  return !!token;
+}

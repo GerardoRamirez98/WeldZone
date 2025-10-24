@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { API_URL } from "@/api/base";
 
 /**
  * Hook para centralizar peticiones HTTP y manejo de errores globales
@@ -14,13 +15,38 @@ export function useApi() {
    */
   const request = async (url: string, options?: RequestInit) => {
     try {
-      const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
+      const doFetch = async (): Promise<Response> => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+        const isFormData =
+          typeof FormData !== "undefined" && options?.body instanceof FormData;
+
+        const headersInit: HeadersInit = {
           ...(options?.headers || {}),
-        },
-        ...options,
-      });
+        };
+
+        if (token && !("Authorization" in (headersInit as Record<string, unknown>))) {
+          (headersInit as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+        }
+
+        if (!isFormData && !("Content-Type" in (headersInit as Record<string, unknown>))) {
+          (headersInit as Record<string, string>)["Content-Type"] = "application/json";
+        }
+
+        return fetch(url.startsWith("http") ? url : `${API_URL}${url}`, {
+          credentials: "include",
+          ...options,
+          headers: headersInit,
+        });
+      };
+
+      let response = await doFetch();
+      if (response.status === 401) {
+        const refreshed = await tryRefresh();
+        if (refreshed) {
+          response = await doFetch();
+        }
+      }
 
       // Si el servidor responde con un error, lo manejamos
       if (!response.ok) {
@@ -63,4 +89,30 @@ export function useApi() {
   };
 
   return { request };
+}
+
+let refreshPromise: Promise<string | null> | null = null;
+async function tryRefresh(): Promise<boolean> {
+  const start = () =>
+    fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        const data = (await r.json()) as { access_token?: string };
+        const token = data?.access_token ?? null;
+        if (token) localStorage.setItem("token", token);
+        return token;
+      })
+      .catch(() => null);
+
+  if (!refreshPromise) refreshPromise = start();
+  const token = await refreshPromise.finally(() => (refreshPromise = null));
+  if (!token) {
+    // Si no se pudo refrescar, limpiar y redirigir
+    localStorage.removeItem("token");
+    return false;
+  }
+  return true;
 }

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import bgImage from "../assets/welder-bg.png"; // ✅ Imagen lateral
-import logo from "../assets/logo-light.png"; // ✅ Logo dentro del form
+import bgImage from "../assets/welder-bg.png"; // ? Imagen lateral
+import logo from "../assets/logo-light.png"; // ? Logo dentro del form
+import { API_URL } from "../api/base";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -16,14 +17,11 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await fetch(
-        "https://weldzone-backend-production.up.railway.app/auth/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
       if (!res.ok) throw new Error("Usuario o contraseña incorrectos");
 
@@ -39,7 +37,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
-      {/* 🧰 Sección Izquierda - Formulario */}
+      {/* 🟡 Sección Izquierda - Formulario */}
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center relative px-8 py-16 bg-gradient-to-br from-zinc-950 to-zinc-900">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(250,204,21,0.05),transparent_70%)] pointer-events-none" />
 
@@ -47,7 +45,7 @@ export default function Login() {
           onSubmit={handleLogin}
           className="w-full max-w-sm bg-zinc-900/70 backdrop-blur-lg border border-yellow-500/30 p-10 rounded-2xl shadow-[0_0_35px_rgba(250,204,21,0.15)] space-y-6"
         >
-          {/* 🔥 Logo */}
+          {/* 🟡 Logo */}
           <div className="flex justify-center mb-4">
             <img
               src={logo}
@@ -56,7 +54,7 @@ export default function Login() {
             />
           </div>
 
-          {/* ⚠️ Error */}
+          {/* 🟡 Error */}
           {error && (
             <p className="text-red-400 text-center bg-red-900/40 py-2 rounded-lg border border-red-500/30">
               {error}
@@ -103,11 +101,11 @@ export default function Login() {
         </form>
 
         <p className="text-xs text-zinc-600 mt-6">
-          © {new Date().getFullYear()} WeldZone — Potencia para el soldador ⚡
+          © {new Date().getFullYear()} WeldZone - Potencia para el soldador ⚡
         </p>
       </div>
 
-      {/* 🔥 Sección Derecha - Imagen con texto */}
+      {/* 🟡 Sección Derecha - Imagen con texto */}
       <div
         className="hidden md:flex w-1/2 relative bg-cover bg-center"
         style={{ backgroundImage: `url(${bgImage})` }}
@@ -116,10 +114,10 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-zinc-950/80 to-yellow-900/20" />
         <div className="relative z-10 flex flex-col items-center justify-center text-center text-white px-12">
           <h2 className="text-4xl font-extrabold text-yellow-400 mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.7)]">
-            Control total de tu negocio ⚙️
+            Control total de tu negocio 💼
           </h2>
           <p className="text-lg max-w-md text-zinc-300">
-            Gestiona productos, monitorea y administra desde un solo panel.{" "}
+            Gestiona productos, monitorea y administra desde un solo panel.{' '}
             <br /> Tu taller, tu control, tu potencia.
           </p>
         </div>
