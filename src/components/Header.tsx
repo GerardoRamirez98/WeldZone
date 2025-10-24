@@ -20,9 +20,12 @@ export default function Header({
     timerRef.current = window.setTimeout(() => onSearch(value), 300);
   };
 
-  useEffect(() => () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    },
+    []
+  );
 
   const links = [
     { to: "/", label: "Catálogo" },
@@ -33,10 +36,21 @@ export default function Header({
     <header className="sticky top-0 z-30 border-b bg-white/70 backdrop-blur border-zinc-200 dark:border-zinc-800 dark:bg-zinc-950/70">
       <div className="container flex items-center justify-between py-3">
         {/* Logo */}
-        <Link to="/" className="flex flex-col items-start gap-1 hover:scale-105 transition-transform">
+        <Link
+          to="/"
+          className="flex items-center gap-3 hover:scale-[1.05] transition-transform"
+        >
           <div className="flex items-center gap-2">
-            <img src={logoDark} alt="WeldZone Logo" className="h-12 w-auto object-contain dark:hidden" />
-            <img src={logoLight} alt="WeldZone Logo" className="h-12 w-auto object-contain hidden dark:block" />
+            <img
+              src={logoDark}
+              alt="WeldZone Logo"
+              className="h-[60px] w-[210px] object-contain dark:hidden"
+            />
+            <img
+              src={logoLight}
+              alt="WeldZone Logo"
+              className="h-[60px] w-[210px] object-contain hidden dark:block"
+            />
           </div>
           <EstadoTienda />
         </Link>
@@ -85,7 +99,11 @@ export default function Header({
           <ThemeToggle />
           <Dialog.Root>
             <Dialog.Trigger asChild>
-              <button type="button" aria-label="Abrir menú" className="p-2.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors">
+              <button
+                type="button"
+                aria-label="Abrir menú"
+                className="p-2.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
+              >
                 <Menu className="h-5 w-5" />
               </button>
             </Dialog.Trigger>
@@ -93,12 +111,18 @@ export default function Header({
               <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
               <Dialog.Content className="fixed top-0 right-0 h-full w-64 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-lg z-50 flex flex-col p-6 animate-in slide-in-from-right duration-300">
                 <Dialog.Title className="sr-only">Menú principal</Dialog.Title>
-                <Dialog.Description className="sr-only">Navegación principal del sitio</Dialog.Description>
+                <Dialog.Description className="sr-only">
+                  Navegación principal del sitio
+                </Dialog.Description>
 
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-lg font-bold">Menú</span>
                   <Dialog.Close asChild>
-                    <button type="button" aria-label="Cerrar menú" className="p-2 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
+                    <button
+                      type="button"
+                      aria-label="Cerrar menú"
+                      className="p-2 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+                    >
                       <X className="h-5 w-5" />
                     </button>
                   </Dialog.Close>
@@ -145,4 +169,3 @@ export default function Header({
     </header>
   );
 }
-
