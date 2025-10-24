@@ -20,6 +20,7 @@ export default function Login() {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // importante para que el backend pueda setear la cookie de refresh
         body: JSON.stringify({ username, password }),
       });
 

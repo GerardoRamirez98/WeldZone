@@ -2,10 +2,27 @@ export const API_URL: string =
   (import.meta as unknown as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ||
   "http://localhost:3000";
 
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split("=")[1]) : null;
+}
+
 function withAuth(init: RequestInit = {}): RequestInit {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const headers = new Headers(init.headers as HeadersInit | undefined);
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+  // Adjunta token CSRF si el backend lo requiere (doble-submit cookie),
+  // buscando nombres comunes: XSRF-TOKEN/csrfToken/csrf-token
+  const method = (init.method || "GET").toString().toUpperCase();
+  if (method !== "GET" && method !== "HEAD") {
+    const csrf =
+      getCookie("XSRF-TOKEN") || getCookie("csrfToken") || getCookie("csrf-token");
+    if (csrf && !headers.has("X-CSRF-Token")) headers.set("X-CSRF-Token", csrf);
+  }
   return { ...init, credentials: "include", headers };
 }
 

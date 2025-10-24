@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_URL } from "../api/base";
+import { get } from "../api/base";
 
 export interface Config {
   whatsapp: string;
@@ -25,9 +25,7 @@ export function useConfig() {
         }
 
         // ✅ 2. Pedir la versión actual al backend
-        const res = await fetch(`${API_URL}/config`);
-        if (!res.ok) throw new Error("Error al obtener configuración");
-        const data: Config = await res.json();
+        const data = await get<Config>(`/config`);
 
         // ✅ 3. Si el número cambió en el backend, actualizar cache y estado
         if (!cachedConfig || cachedConfig.whatsapp !== data.whatsapp) {
@@ -48,7 +46,13 @@ export function useConfig() {
     const interval = setInterval(fetchConfig, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [API_URL]);
+  }, []);
 
   return { config, loading, error };
 }
+
+
+
+
+
+

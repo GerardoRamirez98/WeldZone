@@ -4,6 +4,7 @@ import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import type { Product } from "../../types/products";
 import { toast } from "sonner";
 import { useUpdateProduct, useDeleteProduct } from "../../hooks/useProducts";
+import { get } from "../../api/base";
 import { useApi } from "../../hooks/useApi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -70,8 +71,8 @@ export default function EditProductModal({
     const fetchData = async () => {
       try {
         const [cats, tags] = await Promise.all([
-          fetch(`${API_URL}/config/categorias`).then((r) => r.json()),
-          fetch(`${API_URL}/config/etiquetas`).then((r) => r.json()),
+          get<Categoria[]>(`/config/categorias`),
+          get<Etiqueta[]>(`/config/etiquetas`),
         ]);
         setCategorias(cats);
         setEtiquetas(tags);
@@ -396,10 +397,10 @@ export default function EditProductModal({
         >
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10">
-            <Dialog.Title className="text-lg font-bold text-center mb-4">
+            <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-900 dark:text-zinc-100">
               ¿Guardar cambios?
             </Dialog.Title>
-            <p className="text-center text-sm mb-6">
+            <p className="text-center text-sm mb-6 text-zinc-700 dark:text-zinc-300">
               Se sobrescribirá la información del producto.
             </p>
             <div className="flex justify-center gap-3">

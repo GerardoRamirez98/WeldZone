@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Package, TrendingDown, TrendingUp, AlertTriangle } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { motion } from "framer-motion";
-
+import { get } from "@/api/base";
 // 🧩 Tipo según tu backend
 type Producto = {
   id: number;
@@ -11,20 +11,15 @@ type Producto = {
   categoria?: { nombre: string } | string | null;
   estado?: string;
 };
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
+// API helpers importados desde @/api/base
 export default function Dashboard() {
   const [products, setProducts] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
-
   // 🔄 Cargar productos desde backend
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${API_URL}/products`);
-        if (!res.ok) throw new Error("Error al obtener productos");
-        const data = await res.json();
+        const data = await get<Producto[]>(`/products`);
         setProducts(data);
       } catch (err) {
         console.error("❌ Error al cargar productos:", err);
@@ -34,14 +29,12 @@ export default function Dashboard() {
     };
     fetchProducts();
   }, []);
-
   // 📊 Métricas
   const total = products.length;
   const activos = products.filter((p) => p.estado === "activo").length;
   const descontinuados = products.filter(
     (p) => p.estado === "descontinuado"
   ).length;
-
   // 🧮 Agrupar por categoría
   const categorias = products.reduce((acc: Record<string, number>, p) => {
     const cat =
@@ -51,12 +44,10 @@ export default function Dashboard() {
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {});
-
   const chartData = Object.entries(categorias).map(([name, value]) => ({
     name,
     value,
   }));
-
   const COLORS = [
     "#facc15", // amarillo WeldZone
     "#3b82f6",
@@ -65,13 +56,11 @@ export default function Dashboard() {
     "#a855f7",
     "#f97316",
   ];
-
   return (
     <div className="min-h-[80vh]">
       <h2 className="text-2xl font-bold mb-6 text-zinc-900 dark:text-white">
         Panel de Control
       </h2>
-
       {loading ? (
         <p className="text-center text-zinc-500 animate-pulse">
           Cargando datos del sistema...
@@ -96,13 +85,11 @@ export default function Dashboard() {
               value={descontinuados}
             />
           </div>
-
           {/* Gráfica */}
           <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-5 border border-zinc-200 dark:border-zinc-700">
             <h3 className="text-lg font-semibold mb-4 text-zinc-800 dark:text-zinc-100">
               Distribución por categoría
             </h3>
-
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
@@ -144,7 +131,6 @@ export default function Dashboard() {
     </div>
   );
 }
-
 // 💡 Componente de tarjeta de métrica
 function MetricCard({
   icon,

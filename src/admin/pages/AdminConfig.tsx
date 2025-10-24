@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { API_URL, get, post, put, del } from "@/api/base";
 
 export default function AdminConfig() {
   const [whatsapp, setWhatsapp] = useState("");
@@ -46,24 +47,22 @@ export default function AdminConfig() {
     nombre: string;
   } | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  // API_URL importado desde @/api/base (centralizado)
 
   // 🚀 Cargar configuración
   useEffect(() => {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        const [configRes, catRes, etqRes, maintRes] = await Promise.all([
-          fetch(`${API_URL}/config`),
-          fetch(`${API_URL}/config/categorias`),
-          fetch(`${API_URL}/config/etiquetas`),
-          fetch(`${API_URL}/config/mantenimiento`),
-        ]);
-
-        const config = await configRes.json();
-        const categoriasData = await catRes.json();
-        const etiquetasData = await etqRes.json();
-        const mantenimientoData = await maintRes.json();
+        const [config, categoriasData, etiquetasData, mantenimientoData] =
+          await Promise.all([
+            get<{ whatsapp?: string }>(`/config`),
+            get<{ id: number; nombre: string }[]>(`/config/categorias`),
+            get<{ id: number; nombre: string; color: string }[]>(
+              `/config/etiquetas`
+            ),
+            get<{ mantenimiento: boolean }>(`/config/mantenimiento`),
+          ]);
 
         setWhatsapp(config.whatsapp || "");
         setCategorias(categoriasData);
@@ -83,12 +82,7 @@ export default function AdminConfig() {
     if (!whatsapp.trim()) return toast.warning("⚠️ Ingresa un número válido");
     try {
       setSaving(true);
-      const res = await fetch(`${API_URL}/config`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ whatsapp }),
-      });
-      if (!res.ok) throw new Error();
+      await put<void>(`/config`, { whatsapp });
       localStorage.removeItem("weldzone_config");
       toast.success("✅ Número de WhatsApp actualizado");
     } catch {
@@ -103,12 +97,7 @@ export default function AdminConfig() {
     try {
       setLoadingMaintenance(true);
       const newState = !maintenance;
-      const res = await fetch(`${API_URL}/config/mantenimiento`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mantenimiento: newState }),
-      });
-      if (!res.ok) throw new Error();
+      await put<void>(`/config/mantenimiento`, { mantenimiento: newState });
       setMaintenance(newState);
       toast.success(
         newState
@@ -127,12 +116,10 @@ export default function AdminConfig() {
     if (!newEtiqueta.nombre.trim())
       return toast.warning("⚠️ Ingresa un nombre válido");
     try {
-      const res = await fetch(`${API_URL}/config/etiquetas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEtiqueta),
-      });
-      const data = await res.json();
+      const data = await post<{ id: number; nombre: string; color: string }>(
+        `/config/etiquetas`,
+        newEtiqueta
+      );
       setEtiquetas((prev) => [...prev, data]);
       setNewEtiqueta({ nombre: "", color: "#000000" });
       toast.success("✅ Etiqueta agregada");
@@ -146,12 +133,10 @@ export default function AdminConfig() {
     if (!newCategoria.trim())
       return toast.warning("⚠️ Ingresa un nombre válido");
     try {
-      const res = await fetch(`${API_URL}/config/categorias`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: newCategoria }),
-      });
-      const data = await res.json();
+      const data = await post<{ id: number; nombre: string }>(
+        `/config/categorias`,
+        { nombre: newCategoria }
+      );
       setCategorias((prev) => [...prev, data]);
       setNewCategoria("");
       toast.success("✅ Categoría agregada");
@@ -163,12 +148,7 @@ export default function AdminConfig() {
   // ✏️ Editar nombre categoría
   const handleUpdateCategoria = async (id: number, nombre: string) => {
     try {
-      const res = await fetch(`${API_URL}/config/categorias/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre }),
-      });
-      if (!res.ok) throw new Error();
+      await put<void>(`/config/categorias/${id}`, { nombre });
       setCategorias((prev) =>
         prev.map((c) => (c.id === id ? { ...c, nombre } : c))
       );
@@ -182,12 +162,7 @@ export default function AdminConfig() {
   // ✏️ Editar nombre etiqueta
   const handleUpdateEtiquetaNombre = async (id: number, nombre: string) => {
     try {
-      const res = await fetch(`${API_URL}/config/etiquetas/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre }),
-      });
-      if (!res.ok) throw new Error();
+      await put<void>(`/config/etiquetas/${id}`, { nombre });
       setEtiquetas((prev) =>
         prev.map((e) => (e.id === id ? { ...e, nombre } : e))
       );
@@ -201,12 +176,7 @@ export default function AdminConfig() {
   // 🎨 Cambiar color etiqueta
   const handleColorChange = async (id: number, color: string) => {
     try {
-      const res = await fetch(`${API_URL}/config/etiquetas/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ color }),
-      });
-      if (!res.ok) throw new Error();
+      await put<void>(`/config/etiquetas/${id}`, { color });
       setEtiquetas((prev) =>
         prev.map((e) => (e.id === id ? { ...e, color } : e))
       );
@@ -233,11 +203,9 @@ export default function AdminConfig() {
     try {
       const endpoint =
         deleteTarget.type === "categoria"
-          ? `${API_URL}/config/categorias/${deleteTarget.id}`
-          : `${API_URL}/config/etiquetas/${deleteTarget.id}`;
-
-      const res = await fetch(endpoint, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+          ? `/config/categorias/${deleteTarget.id}`
+          : `/config/etiquetas/${deleteTarget.id}`;
+      await del<void>(endpoint);
 
       if (deleteTarget.type === "categoria")
         setCategorias((prev) => prev.filter((c) => c.id !== deleteTarget.id));
@@ -263,6 +231,7 @@ export default function AdminConfig() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Configuración del Sistema</h1>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* 🔹 Modo Mantenimiento */}
       <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">
         <div className="flex items-center justify-between mb-2">
@@ -304,7 +273,7 @@ export default function AdminConfig() {
             Cargando configuración...
           </div>
         ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:justify-end">
             <input
               type="text"
               value={whatsapp}
@@ -335,6 +304,8 @@ export default function AdminConfig() {
             </button>
           </div>
         )}
+      </div>
+
       </div>
 
       {/* 🔹 Categorías */}
@@ -517,3 +488,4 @@ export default function AdminConfig() {
     </div>
   );
 }
+
