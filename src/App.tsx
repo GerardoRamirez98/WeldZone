@@ -1,18 +1,19 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
 import Nosotros from "./pages/Nosotros";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import AdminLayout from "./admin/AdminLayout";
-import Dashboard from "./admin/pages/Dashboard";
-import Products from "./admin/pages/Products";
-import AdminConfig from "./admin/pages/AdminConfig";
+const AdminLayout = lazy(() => import("./admin/AdminLayout"));
+const Dashboard = lazy(() => import("./admin/pages/Dashboard"));
+const Products = lazy(() => import("./admin/pages/Products"));
+const AdminConfig = lazy(() => import("./admin/pages/AdminConfig"));
 
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
+import { useMaintenance } from "./hooks/useMaintenance";
 
 // ⚠️ Importa tus páginas de error
 import Error404 from "./pages/errors/Error404";
@@ -21,6 +22,7 @@ import Error500 from "./pages/errors/Error500";
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isAdmin = location.pathname.startsWith("/admin");
   const isCatalogo = location.pathname === "/";
   const isLogin = location.pathname === "/login";
@@ -29,28 +31,11 @@ export default function App() {
   const [pageChange, setPageChange] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
+  // Modo mantenimiento vía React Query
+  const { mantenimiento: maintenanceMode } = useMaintenance();
 
   // 🧩 Control de modo mantenimiento (puede venir de Supabase o variable de entorno)
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
-  useEffect(() => {
-    const fetchMaintenance = async () => {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/config/mantenimiento`
-        );
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setMaintenanceMode(data.mantenimiento);
-      } catch (err) {
-        console.warn("No se pudo verificar modo mantenimiento", err);
-      }
-    };
-
-    fetchMaintenance(); // primera carga
-    const interval = setInterval(fetchMaintenance, 10000); // cada 10 s
-    return () => clearInterval(interval);
-  }, []);
 
   // 📍 Detectar scroll solo en catálogo
   useEffect(() => {
@@ -113,7 +98,34 @@ export default function App() {
       </div>
 
       {/* 🧠 Header solo en páginas públicas (NO en login ni admin) */}
-      {!isAdmin && !isLogin && <Header onSearch={() => {}} />}
+      {!isAdmin && !isLogin && (
+        <Header
+          onSearch={(q: string) => {
+            const params = new URLSearchParams(location.search);
+            const value = q.trim();
+            if (value) params.set("q", value);
+            else params.delete("q");
+
+            // Navega al catálogo y sincroniza el query param
+            if (location.pathname !== "/") {
+              navigate(
+                {
+                  pathname: "/",
+                  search: params.toString() ? `?${params.toString()}` : "",
+                },
+                { replace: false }
+              );
+            } else {
+              navigate(
+                {
+                  search: params.toString() ? `?${params.toString()}` : "",
+                },
+                { replace: true }
+              );
+            }
+          }}
+        />
+      )}
 
       {/* 📦 Rutas */}
       <main className="flex-1">
@@ -133,13 +145,36 @@ export default function App() {
                 path="/admin"
                 element={
                   <ProtectedRoute>
-                    <AdminLayout />
+                    <Suspense fallback={<div className="p-6">Cargando panel...</div>}>
+                      <AdminLayout />
+                    </Suspense>
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Dashboard />} />
-                <Route path="products" element={<Products />} />
-                <Route path="config" element={<AdminConfig />} />
+                <Route
+                  index
+                  element={
+                    <Suspense fallback={<div className="p-6">Cargando...</div>}>
+                      <Dashboard />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="products"
+                  element={
+                    <Suspense fallback={<div className="p-6">Cargando...</div>}>
+                      <Products />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="config"
+                  element={
+                    <Suspense fallback={<div className="p-6">Cargando...</div>}>
+                      <AdminConfig />
+                    </Suspense>
+                  }
+                />
               </Route>
 
               <Route path="/error-500" element={<Error500 />} />

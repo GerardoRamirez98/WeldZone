@@ -1,5 +1,4 @@
 // src/admin/components/Topbar.tsx
-import ThemeToggle from "../../components/ThemeToggle";
 import { Menu, X } from "lucide-react";
 
 export function Topbar({
@@ -10,7 +9,7 @@ export function Topbar({
   sidebarOpen: boolean;
 }) {
   return (
-    <header className="flex justify-between items-center h-14 px-4 border-b dark:border-zinc-700">
+    <header className="flex justify-between items-center h-14 px-4 border-b dark:border-zinc-700 flex-none">
       {/* Botón Hamburguesa (solo móvil) */}
       <button
         className="md:hidden bg-yellow-500 text-white p-2 rounded"
@@ -22,8 +21,8 @@ export function Topbar({
       {/* Espaciador flexible */}
       <div className="flex-1" />
 
-      {/* Botón tema claro/oscuro */}
-      <ThemeToggle />
+      {/* Área reservada a la derecha (vacía por ahora) */}
     </header>
   );
 }
+

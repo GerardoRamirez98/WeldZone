@@ -2,7 +2,7 @@ import { useApi } from "../hooks/useApi";
 import type { Product, NewProduct } from "../types/products";
 
 // ✅ URL base del backend (puede ser local o de producción)
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL } from "./base";
 
 /**
  * Hook API para manejar productos con control de errores global
@@ -65,3 +65,4 @@ export function useProductsApi() {
     uploadProductImage, // opcional
   };
 }
+

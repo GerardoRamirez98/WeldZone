@@ -30,7 +30,7 @@
       "@/*": ["*"]
     },
     /* 🚫 Silenciar deprecaciones TS6 */
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src"]
 }

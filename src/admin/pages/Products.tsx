@@ -95,7 +95,9 @@ export default function Products() {
                 <Tooltip.Provider delayDuration={150}>
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
-                      <label
+                      <button
+                        type="button"
+                        aria-label="Ver ficha técnica"
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
@@ -115,7 +117,7 @@ export default function Products() {
                           className="w-4 h-4 text-white"
                           strokeWidth={2.2}
                         />
-                      </label>
+                      </button>
                     </Tooltip.Trigger>
 
                     {/* ✨ Tooltip animado */}

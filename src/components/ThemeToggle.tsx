@@ -32,12 +32,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={handleClick}
-      className="
-    flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition
-    border
-    bg-zinc-900 text-white hover:bg-zinc-800 border-zinc-900
-    dark:bg-zinc-100 dark:text-white dark:hover:bg-zinc-200 dark:border-zinc-200
-"
+      className="inline-flex items-center gap-2 rounded-xl h-9 px-3 text-sm font-medium transition border bg-zinc-900 text-white hover:bg-zinc-800 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:border-zinc-200"
       aria-label={`Cambiar a ${nextLabel}`}
     >
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

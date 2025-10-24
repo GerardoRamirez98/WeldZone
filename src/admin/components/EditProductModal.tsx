@@ -269,7 +269,7 @@ export default function EditProductModal({
                 </label>
 
                 <div className="flex justify-center items-center gap-3 mb-3">
-                  <label className="flex items-center justify-center px-3 py-1.5 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-medium cursor-pointer transition">
+                  <label className="btn btn-warning btn-sm min-w-[140px] cursor-pointer">
                     <Upload size={14} strokeWidth={1.8} /> Seleccionar imagen
                     <input
                       type="file"
@@ -284,7 +284,7 @@ export default function EditProductModal({
                         setImagenFile(null);
                         setImagenPreview(null);
                       }}
-                      className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition"
+                      className="btn btn-danger btn-sm min-w-[100px]"
                     >
                       <Trash2 size={14} strokeWidth={1.8} /> Quitar
                     </button>
@@ -323,7 +323,7 @@ export default function EditProductModal({
                             "_blank"
                           )
                         }
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition"
+                        className="btn btn-secondary btn-sm min-w-[90px]"
                       >
                         <Eye size={14} strokeWidth={1.8} /> Ver
                       </button>
@@ -332,7 +332,7 @@ export default function EditProductModal({
                           setSpecFile(null);
                           setSpecFileUrl(null);
                         }}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition"
+                        className="btn btn-danger btn-sm min-w-[100px]"
                       >
                         <Trash2 size={14} strokeWidth={1.8} /> Quitar
                       </button>
@@ -346,7 +346,7 @@ export default function EditProductModal({
                     </p>
                   </div>
                 ) : (
-                  <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold cursor-pointer transition shadow-sm">
+                  <label className="btn btn-warning btn-sm cursor-pointer">
                     <Upload size={14} strokeWidth={1.8} /> Seleccionar archivo
                     <input
                       type="file"
@@ -363,25 +363,21 @@ export default function EditProductModal({
           {/* Botones inferiores */}
           <div className="flex justify-between items-center gap-2 mt-6">
             <button
-              className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition text-sm"
+              className="btn btn-danger min-w-[110px]"
               onClick={() => setShowDeleteConfirm(true)}
             >
               Eliminar
             </button>
             <div className="flex gap-2 ml-auto">
               <button
-                className="px-4 py-2 rounded-lg bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 transition"
+                className="btn btn-secondary min-w-[110px]"
                 onClick={onClose}
               >
                 Cancelar
               </button>
               <button
                 disabled={isSubmitting}
-                className={`px-4 py-2 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-                  isSubmitting
-                    ? "bg-yellow-400 text-black opacity-70 cursor-not-allowed"
-                    : "bg-yellow-500 hover:bg-yellow-600 text-black"
-                }`}
+                className={isSubmitting ? "btn btn-warning opacity-70 cursor-not-allowed min-w-[140px]" : "btn btn-warning min-w-[140px]"}
                 onClick={() => setShowSaveConfirm(true)}
               >
                 {isSubmitting ? "Guardando..." : "Guardar cambios"}
@@ -464,3 +460,4 @@ export default function EditProductModal({
     </>
   );
 }
+

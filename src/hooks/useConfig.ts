@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "../api/base";
 
 export interface Config {
   whatsapp: string;
@@ -9,7 +10,7 @@ export function useConfig() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  // API_URL unificado
 
   useEffect(() => {
     const fetchConfig = async () => {

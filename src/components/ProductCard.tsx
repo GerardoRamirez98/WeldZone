@@ -82,6 +82,8 @@ export default function ProductCard({ product }: { product: Product }) {
                   "/render/image/public/"
                 )}?width=400&quality=70&resize=contain`}
                 alt={product.nombre}
+                width={400}
+                height={400}
                 loading="lazy"
                 onLoad={() => setImageLoaded(true)}
                 className={`relative z-10 max-h-full max-w-full object-contain transition-all duration-700 ease-out group-hover:scale-[1.02] ${
@@ -132,7 +134,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <div className="relative">
               {product.imagenUrl && (
                 <img
-                  src={`${baseRenderUrl}?width=800&quality=80&resize=contain`}
+                  src={`${baseRenderUrl}?width=800&quality=80&resize=contain`} width={800} height={400}
                   alt={product.nombre}
                   className="w-full max-h-[400px] object-contain rounded-lg bg-white p-2 dark:bg-zinc-800"
                 />
@@ -140,7 +142,9 @@ export default function ProductCard({ product }: { product: Product }) {
 
               {/* 🟨 Ficha técnica */}
               {product.specFileUrl && (
-                <label
+                <button
+                  type="button"
+                  aria-label="Ver ficha técnica"
                   onClick={() =>
                     window.open(
                       `https://docs.google.com/viewer?url=${encodeURIComponent(
@@ -155,7 +159,7 @@ export default function ProductCard({ product }: { product: Product }) {
           animate-[pulse-soft_3s_ease-in-out_infinite]"
                 >
                   <FileText className="w-5 h-5 text-white" strokeWidth={2.2} />
-                </label>
+                </button>
               )}
             </div>
 
@@ -172,7 +176,8 @@ export default function ProductCard({ product }: { product: Product }) {
 
             {/* Cantidad */}
             <div className="mt-4 flex items-center gap-3">
-              <label
+              <button
+                type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 className="p-2 rounded-md border transition 
         border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
@@ -180,13 +185,14 @@ export default function ProductCard({ product }: { product: Product }) {
         shadow-sm active:scale-95 cursor-pointer"
               >
                 <Minus className="w-4 h-4 text-zinc-800 dark:text-zinc-100" />
-              </label>
+              </button>
 
               <span className="font-semibold text-lg text-zinc-900 dark:text-zinc-100">
                 {quantity}
               </span>
 
-              <label
+              <button
+                type="button"
                 onClick={() => setQuantity((q) => q + 1)}
                 className="p-2 rounded-md border transition 
         border-zinc-300 bg-zinc-100 hover:bg-zinc-200 
@@ -194,7 +200,7 @@ export default function ProductCard({ product }: { product: Product }) {
         shadow-sm active:scale-95 cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-zinc-800 dark:text-zinc-100" />
-              </label>
+              </button>
             </div>
 
             {/* Total */}
@@ -207,13 +213,14 @@ export default function ProductCard({ product }: { product: Product }) {
 
             {/* Botones */}
             <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <label
+              <button
+                type="button"
                 onClick={() => addToCart(product, quantity)}
                 className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 
         text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
               >
                 <ShoppingCart className="w-4 h-4" /> Agregar al carrito
-              </label>
+              </button>
 
               <Dialog.Close
                 className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium 
@@ -228,3 +235,4 @@ export default function ProductCard({ product }: { product: Product }) {
     </Dialog.Root>
   );
 }
+

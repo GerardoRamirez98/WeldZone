@@ -46,12 +46,13 @@ export default function SidebarCategorias({
   const MobileDrawer = (
     <>
       {/* Botón abrir filtro */}
-      <label
+      <button
+        type="button"
         onClick={() => setOpen(true)}
         className="md:hidden flex items-center gap-2 bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold shadow-sm active:scale-95 transition mb-4"
       >
         <Filter className="w-4 h-4" /> Filtrar
-      </label>
+      </button>
 
       {/* Drawer */}
       {open && (
@@ -66,12 +67,13 @@ export default function SidebarCategorias({
           <div className="relative z-10 w-4/5 max-w-sm bg-white dark:bg-zinc-900 p-5 shadow-2xl rounded-l-2xl overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold">Filtrar por</h2>
-              <label
+              <button
+                type="button"
                 onClick={() => setOpen(false)}
                 className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <X className="w-5 h-5" />
-              </label>
+              </button>
             </div>
 
             <CategoryList
@@ -141,12 +143,13 @@ function CategoryList({
   return (
     <div>
       {/* 🔝 “Todas” */}
-      <label
+      <button
+        type="button"
         onClick={() => onSelect(null)}
         className={getCategoryStyle(categoriaSeleccionada === null)}
       >
         Todas
-      </label>
+      </button>
 
       <h3 className="font-semibold text-base mb-3 mt-4 text-zinc-800 dark:text-zinc-100">
         Categorías
@@ -158,7 +161,8 @@ function CategoryList({
         <ul className="space-y-1">
           {categorias.map((cat) => (
             <li key={cat.id}>
-              <label
+              <button
+                type="button"
                 onClick={() => onSelect(cat.id)}
                 className={getCategoryStyle(categoriaSeleccionada === cat.id)}
               >
@@ -167,7 +171,7 @@ function CategoryList({
                     cat.nombre.slice(1).toLowerCase()}
                 </span>
                 <ChevronRight className="w-4 h-4 opacity-50" />
-              </label>
+              </button>
             </li>
           ))}
         </ul>

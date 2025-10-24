@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
-/* Quita límites del template de Vite */
+/* Root container adjustments */
 #root {
   max-width: unset;
   width: 100%;
@@ -9,31 +9,19 @@
   text-align: initial;
 }
 
-/* Que el layout ocupe toda la altura */
+/* Full-height layout */
 html,
 body,
 #root {
   height: 100%;
 }
 
-/* 🔄 Animaciones personalizadas */
-@keyframes pulse-soft {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.07);
-  }
-}
-
+/* Animations */
 @keyframes fade-in {
   from {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -48,7 +36,6 @@ body,
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
@@ -63,7 +50,6 @@ body,
     opacity: 0;
     transform: translateY(2px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -75,7 +61,6 @@ body,
     opacity: 1;
     transform: translateY(0);
   }
-
   to {
     opacity: 0;
     transform: translateY(2px);
@@ -90,20 +75,18 @@ body,
   animation: fadeOut 0.18s ease-in forwards;
 }
 
-/* 🔅 Cuando el modal está abierto, atenúa todo el catálogo */
+/* Dim catalog when a modal is open */
 body.modal-open .group {
   filter: brightness(0.5) saturate(0.8);
   transition: filter 0.3s ease;
 }
 
-/* 🎨 Estilos base modo oscuro fijo */
+/* Neutral base (dark mode controlled via .dark on html) */
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -120,11 +103,8 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #242424;
 }
 
 h1 {
@@ -132,38 +112,10 @@ h1 {
   line-height: 1.1;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s, background-color 0.25s;
-  color: white;
-}
-
-button:hover {
-  border-color: #facc15;
-  /* amarillo Tailwind */
-  background-color: #272727;
-}
-
-button:focus,
-button:focus-visible {
-  outline: 3px solid #facc15;
-}
-
+/* Single source of truth for pulse-soft */
 @keyframes pulse-soft {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 .animate-pulse-soft {
   animation: pulse-soft 3s ease-in-out infinite;
@@ -188,8 +140,7 @@ button:focus-visible {
 }
 
 @keyframes weld-glow {
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
   }
   50% {
@@ -201,17 +152,33 @@ button:focus-visible {
   animation: weld-glow 2.5s ease-in-out infinite;
 }
 
-/* 🧱 Componentes base reutilizables */
+/* Reusable base components */
 @layer components {
+  /* Inputs legibles en light y dark */
   .input-base {
-    @apply w-full p-2 pt-5 border-b-2 border-zinc-600 bg-transparent focus:border-yellow-500 text-zinc-100 placeholder-zinc-500;
+    @apply w-full p-2 pt-5 border-b-2 
+      border-zinc-300 bg-white text-zinc-900 placeholder-zinc-500 
+      focus:border-yellow-500 
+      dark:border-zinc-600 dark:bg-transparent dark:text-zinc-100 dark:placeholder-zinc-500;
   }
 
   .select-base {
-    @apply w-full p-2 pt-5 border-b-2 border-zinc-600 bg-zinc-800 focus:border-yellow-500 text-zinc-100;
+    @apply w-full p-2 pt-5 border-b-2 
+      border-zinc-300 bg-white text-zinc-900 
+      focus:border-yellow-500 
+      dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100;
   }
 
   .label-base {
-    @apply absolute left-2 top-1 text-sm text-zinc-400;
+    @apply absolute left-2 top-1 text-sm text-zinc-600 dark:text-zinc-400;
   }
+
+  /* Botones base reutilizables */
+  .btn { @apply inline-flex items-center justify-center gap-2 px-3 h-9 rounded-md text-sm font-medium transition shadow-sm select-none; }
+  .btn-sm { @apply px-2.5 h-8 text-xs; }
+  .btn-md { @apply px-4 h-10 text-sm; }
+  .btn-block { @apply w-full; }
+  .btn-warning { @apply bg-yellow-500 hover:bg-yellow-600 text-black; }
+  .btn-danger  { @apply bg-red-600 hover:bg-red-700 text-white; }
+  .btn-secondary { @apply bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600; }
 }

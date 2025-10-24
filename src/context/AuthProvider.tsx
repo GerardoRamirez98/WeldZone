@@ -4,7 +4,7 @@ import type { AuthContextType, User } from "./auth-context";
 import Loader from "../components/Loader";
 
 // 🌐 URL dinámica para desarrollo y producción
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL } from "../api/base";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -60,3 +60,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
