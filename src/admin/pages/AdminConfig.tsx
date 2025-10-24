@@ -232,80 +232,79 @@ export default function AdminConfig() {
       <h1 className="text-2xl font-bold">Configuración del Sistema</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* 🔹 Modo Mantenimiento */}
-      <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            🛠️ Modo mantenimiento
-          </h2>
-          <button
-            onClick={handleToggleMaintenance}
-            disabled={loadingMaintenance}
-            className={`px-4 py-2 rounded-md font-medium transition ${
-              maintenance
-                ? "bg-yellow-500 hover:bg-yellow-600 text-black"
-                : "bg-emerald-600 hover:bg-emerald-700 text-white"
-            }`}
-          >
-            {loadingMaintenance
-              ? "Cambiando..."
-              : maintenance
-              ? "Desactivar"
-              : "Activar"}
-          </button>
-        </div>
-        <p className="text-sm text-zinc-500">
-          {maintenance
-            ? "El sitio público está actualmente en modo mantenimiento."
-            : "El sitio está visible para todos los visitantes."}
-        </p>
-      </div>
-
-      {/* 🔹 WhatsApp */}
-      <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Phone className="text-green-600" size={20} />
-          <h2 className="text-lg font-semibold">Número de WhatsApp</h2>
-        </div>
-        {loading ? (
-          <div className="flex items-center gap-2 text-zinc-500">
-            <Loader2 className="animate-spin" size={18} />
-            Cargando configuración...
-          </div>
-        ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:justify-end">
-            <input
-              type="text"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="Ejemplo: 5214742564738"
-              className="w-full sm:max-w-xs rounded-lg border bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-emerald-600 transition"
-            />
+        {/* 🔹 Modo Mantenimiento */}
+        <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              🛠️ Modo mantenimiento
+            </h2>
             <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${
-                saving
-                  ? "bg-emerald-700 text-white opacity-70 cursor-not-allowed"
+              onClick={handleToggleMaintenance}
+              disabled={loadingMaintenance}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                maintenance
+                  ? "bg-yellow-500 hover:bg-yellow-600 text-black"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white"
               }`}
             >
-              {saving ? (
-                <>
-                  <Loader2 className="animate-spin" size={16} />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  Guardar cambios
-                </>
-              )}
+              {loadingMaintenance
+                ? "Cambiando..."
+                : maintenance
+                ? "Desactivar"
+                : "Activar"}
             </button>
           </div>
-        )}
-      </div>
+          <p className="text-sm text-zinc-500">
+            {maintenance
+              ? "El sitio público está actualmente en modo mantenimiento."
+              : "El sitio está visible para todos los visitantes."}
+          </p>
+        </div>
 
+        {/* 🔹 WhatsApp */}
+        <div className="bg-white dark:bg-zinc-800 shadow-md rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Phone className="text-green-600" size={20} />
+            <h2 className="text-lg font-semibold">Número de WhatsApp</h2>
+          </div>
+          {loading ? (
+            <div className="flex items-center gap-2 text-zinc-500">
+              <Loader2 className="animate-spin" size={18} />
+              Cargando configuración...
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:justify-end">
+              <input
+                type="text"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder="Ejemplo: 5214742564738"
+                className="w-full sm:max-w-xs rounded-lg border bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-emerald-600 transition"
+              />
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${
+                  saving
+                    ? "bg-emerald-700 text-white opacity-70 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                }`}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    Guardar cambios
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 🔹 Categorías */}
@@ -488,4 +487,3 @@ export default function AdminConfig() {
     </div>
   );
 }
-
