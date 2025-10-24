@@ -15,7 +15,9 @@ export async function uploadImage(file: File): Promise<UploadResponse> {
     credentials: "include",
     headers: (() => {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      return token ? { Authorization: `Bearer ${token}` } : {};
+      const h = new Headers();
+      if (token) h.set("Authorization", `Bearer ${token}`);
+      return h;
     })(),
   });
 

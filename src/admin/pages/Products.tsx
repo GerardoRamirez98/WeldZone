@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import AddProductModal from "../components/AddProductModal";
 import EditProductModal from "../components/EditProductModal";
 import { Dialog } from "@headlessui/react";
@@ -7,6 +7,8 @@ import { useProducts, useDeleteProduct } from "../../hooks/useProducts";
 import { toast } from "sonner";
 import { FileText, Tag } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { useCategorias } from "@/hooks/useCategories";
+import { exportProductsPdf } from "@/utils/pdf";
 
 export default function Products() {
   // 🧩 React Query hooks
@@ -17,6 +19,13 @@ export default function Products() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [productoEdit, setProductoEdit] = useState<Product | null>(null);
   const [productoDelete, setProductoDelete] = useState<Product | null>(null);
+  const { data: categorias = [] } = useCategorias();
+  const [categoriaId, setCategoriaId] = useState<number | "all">("all");
+
+  const filteredForPdf = useMemo(() => {
+    if (categoriaId === "all") return products;
+    return products.filter((p) => p.categoria?.id === categoriaId);
+  }, [products, categoriaId]);
 
   // ✅ Loader / error
   if (loading)
@@ -53,6 +62,49 @@ export default function Products() {
       </div>
 
       {/* 🗂️ Grid de productos */}
+      {/* Herramientas de exportación */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-zinc-600 dark:text-zinc-300">Categoría:</label>
+          <select
+            className="px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm"
+            value={categoriaId}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCategoriaId(v === 'all' ? 'all' : Number(v));
+            }}
+          >
+            <option value="all">Todas</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          className="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm"
+          onClick={async () => {
+            try {
+              const catName =
+                categoriaId === 'all'
+                  ? undefined
+                  : categorias.find((c) => c.id === categoriaId)?.nombre;
+              await exportProductsPdf(filteredForPdf, {
+                title: 'Listado de Productos',
+                categoryName: catName,
+              });
+            } catch (err) {
+              console.error('Error exportando PDF:', err);
+              toast.error('No se pudo generar el PDF');
+            }
+          }}
+        >
+          Exportar PDF
+        </button>
+      </div>
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => (
           <div
