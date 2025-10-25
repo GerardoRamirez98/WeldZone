@@ -9,7 +9,6 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCategorias } from "@/hooks/useCategories";
 import { exportProductsPdf } from "@/utils/pdf";
 import ProductCardAdmin from "../components/ProductCardAdmin";
-import VirtualGrid from "@/components/VirtualGrid";
 
 export default function Products() {
   const { products, loading, error } = useProducts();
@@ -111,22 +110,19 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Grid virtualizado */}
+      {/* Grid sin virtualización para evitar recortes en acciones */}
       <Tooltip.Provider delayDuration={150}>
-        <VirtualGrid
-          items={products}
-          render={(prod) => (
-            <ProductCardAdmin
-              product={prod}
-              onEdit={setProductoEdit}
-              onDelete={setProductoDelete}
-            />
-          )}
-          itemKey={(p) => p.id}
-          gap={24}
-          className="relative"
-          estimateRowHeight={(cw) => Math.max(320, Math.min(560, Math.round(cw + 150)))}
-        />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {products.map((prod) => (
+            <div key={prod.id}>
+              <ProductCardAdmin
+                product={prod}
+                onEdit={setProductoEdit}
+                onDelete={setProductoDelete}
+              />
+            </div>
+          ))}
+        </div>
       </Tooltip.Provider>
 
       {/* Modal Agregar */}
