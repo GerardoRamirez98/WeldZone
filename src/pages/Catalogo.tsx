@@ -129,19 +129,31 @@ export default function Catalogo() {
       />
 
       <div className="flex-1">
-        <input
-          aria-label="Buscar productos"
-          value={q}
-          onChange={(e) => {
-            const value = e.target.value;
-            const params = new URLSearchParams(searchParams);
-            if (value.trim()) params.set("q", value);
-            else params.delete("q");
-            setSearchParams(params, { replace: true });
-          }}
-          placeholder="Buscar productos."
-          className="sm:hidden mb-4 rounded-xl border bg-white px-3 py-2 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-        />
+        {/* Barra de acciones móvil: buscador + descargar PDF */}
+        <div className="sm:hidden mb-4 flex items-center gap-2">
+          <input
+            aria-label="Buscar productos"
+            value={q}
+            onChange={(e) => {
+              const value = e.target.value;
+              const params = new URLSearchParams(searchParams);
+              if (value.trim()) params.set("q", value);
+              else params.delete("q");
+              setSearchParams(params, { replace: true });
+            }}
+            placeholder="Buscar productos."
+            className="flex-1 rounded-xl border bg-white px-3 py-2 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          />
+          {filtered.length > 0 && (
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex items-center justify-center h-9 px-3 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 active:scale-[.99] transition"
+            >
+              Descargar PDF
+            </button>
+          )}
+        </div>
 
         <AnimatePresence mode="wait">
           <motion.section

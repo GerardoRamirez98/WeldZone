@@ -184,7 +184,7 @@ export default function SidebarCategorias({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="md:hidden flex items-center gap-2 bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold shadow-sm active:scale-95 transition mb-4"
+        className="md:hidden inline-flex items-center justify-center gap-2 h-9 px-3 rounded-xl bg-yellow-500 text-black font-semibold shadow-sm active:scale-[.99] transition mb-4"
       >
         <Filter className="w-4 h-4" /> Filtrar
       </button>
@@ -209,15 +209,7 @@ export default function SidebarCategorias({
             </div>
 
             {/* Botón de descarga en móvil */}
-            {onExport && (
-              <button
-                type="button"
-                onClick={onExport}
-                className="mb-4 w-full bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 active:scale-[.99] transition"
-              >
-                Descargar listado (PDF)
-              </button>
-            )}
+            {/* Descargar PDF movido a la barra del buscador en móvil */}
 
             <CategoryList
               categorias={categorias}
