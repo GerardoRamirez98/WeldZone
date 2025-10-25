@@ -25,6 +25,122 @@ interface SidebarCategoriasProps {
   onSelectPromo?: (id: number | null) => void;
 }
 
+// Filtro de precio (declarado arriba para evitar problemas de HMR/hoisting)
+function PriceFilter({
+  min,
+  max,
+  onApply,
+}: {
+  min: number | null;
+  max: number | null;
+  onApply?: (min: number | null, max: number | null) => void;
+}) {
+  const [localMin, setLocalMin] = useState<string>(min != null ? String(min) : "");
+  const [localMax, setLocalMax] = useState<string>(max != null ? String(max) : "");
+
+  useEffect(() => setLocalMin(min != null ? String(min) : ""), [min]);
+  useEffect(() => setLocalMax(max != null ? String(max) : ""), [max]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const m1 = localMin.trim() === "" ? null : Number(localMin);
+      const m2 = localMax.trim() === "" ? null : Number(localMax);
+      const validMin = m1 != null && Number.isFinite(m1) ? m1 : null;
+      const validMax = m2 != null && Number.isFinite(m2) ? m2 : null;
+      onApply?.(validMin, validMax);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [localMin, localMax, onApply]);
+
+  const onMinChange = (val: string) => {
+    setLocalMin(val);
+    const nm = val.trim() === "" ? null : Number(val);
+    const curMax = localMax.trim() === "" ? null : Number(localMax);
+    if (nm != null && Number.isFinite(nm) && curMax != null && Number.isFinite(curMax) && nm > curMax) {
+      setLocalMax(String(nm));
+    }
+  };
+
+  const onMaxChange = (val: string) => {
+    setLocalMax(val);
+    const nx = val.trim() === "" ? null : Number(val);
+    const curMin = localMin.trim() === "" ? null : Number(localMin);
+    if (nx != null && Number.isFinite(nx) && curMin != null && Number.isFinite(curMin) && nx < curMin) {
+      setLocalMin(String(nx));
+    }
+  };
+
+  return (
+    <div className="mt-5">
+      <h3 className="font-semibold text-base mb-2 text-zinc-800 dark:text-zinc-100">Precio</h3>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          placeholder="Mínimo"
+          value={localMin}
+          onChange={(e) => onMinChange(e.target.value)}
+          className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+        <span className="text-zinc-400">—</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          placeholder="Máximo"
+          value={localMax}
+          onChange={(e) => onMaxChange(e.target.value)}
+          className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Lista de tipos de promoción (etiquetas)
+function PromoList({
+  items,
+  selectedId,
+  onSelect,
+}: {
+  items: { id: number; nombre: string; count: number }[];
+  selectedId: number | null;
+  onSelect?: (id: number | null) => void;
+}) {
+  if (!items || items.length === 0) return null;
+
+  const style = (active: boolean) =>
+    `w-full flex justify-between items-center px-3 py-1.5 rounded-md text-sm font-medium transition ${
+      active
+        ? "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+        : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+    }`;
+
+  return (
+    <div className="mt-6">
+      <h3 className="font-semibold text-base mb-3 text-zinc-800 dark:text-zinc-100">Tipo de promoción</h3>
+      <ul className="space-y-1">
+        <li>
+          <button type="button" className={style(selectedId === null)} onClick={() => onSelect?.(null)}>
+            <span className="truncate">Todas</span>
+            <ChevronRight className="w-4 h-4 opacity-50" />
+          </button>
+        </li>
+        {items.map((it) => (
+          <li key={it.id}>
+            <button type="button" className={style(selectedId === it.id)} onClick={() => onSelect?.(it.id)}>
+              <span className="truncate">
+                {it.nombre}
+                {typeof it.count === "number" ? ` (${it.count})` : ""}
+              </span>
+              <ChevronRight className="w-4 h-4 opacity-50" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function SidebarCategorias({
   categorias,
   categoriaSeleccionada,
@@ -226,123 +342,4 @@ function CategoryList({
   );
 }
 
-// Precio: inputs Mínimo y Máximo con botón aplicar
-function PriceFilter({
-  min,
-  max,
-  onApply,
-}: {
-  min: number | null;
-  max: number | null;
-  onApply?: (min: number | null, max: number | null) => void;
-}) {
-  const [localMin, setLocalMin] = useState<string>(min != null ? String(min) : "");
-  const [localMax, setLocalMax] = useState<string>(max != null ? String(max) : "");
-
-  // Mantén sincronizado el estado local si cambian los props
-  useEffect(() => setLocalMin(min != null ? String(min) : ""), [min]);
-  useEffect(() => setLocalMax(max != null ? String(max) : ""), [max]);
-
-  // Auto-aplicar tras escribir (debounce)
-  useEffect(() => {
-    const t = setTimeout(() => {
-      const m1 = localMin.trim() === "" ? null : Number(localMin);
-      const m2 = localMax.trim() === "" ? null : Number(localMax);
-      const validMin = m1 != null && Number.isFinite(m1) ? m1 : null;
-      const validMax = m2 != null && Number.isFinite(m2) ? m2 : null;
-      onApply?.(validMin, validMax);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [localMin, localMax, onApply]);
-
-  const onMinChange = (val: string) => {
-    // Solo números y vacío
-    setLocalMin(val);
-    const nm = val.trim() === "" ? null : Number(val);
-    const curMax = localMax.trim() === "" ? null : Number(localMax);
-    if (nm != null && Number.isFinite(nm) && curMax != null && Number.isFinite(curMax) && nm > curMax) {
-      // Si min supera a max, ajusta max al nuevo min
-      setLocalMax(String(nm));
-    }
-  };
-
-  const onMaxChange = (val: string) => {
-    setLocalMax(val);
-    const nx = val.trim() === "" ? null : Number(val);
-    const curMin = localMin.trim() === "" ? null : Number(localMin);
-    if (nx != null && Number.isFinite(nx) && curMin != null && Number.isFinite(curMin) && nx < curMin) {
-      // Si max queda por debajo de min, baja min al nuevo max
-      setLocalMin(String(nx));
-    }
-  };
-
-  return (
-    <div className="mt-5">
-      <h3 className="font-semibold text-base mb-2 text-zinc-800 dark:text-zinc-100">Precio</h3>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="Mínimo"
-          value={localMin}
-          onChange={(e) => onMinChange(e.target.value)}
-          className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-        <span className="text-zinc-400">—</span>
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="Máximo"
-          value={localMax}
-          onChange={(e) => onMaxChange(e.target.value)}
-          className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-      </div>
-    </div>
-  );
-}
-
-// Tipos de promoción (etiquetas)
-function PromoList({
-  items,
-  selectedId,
-  onSelect,
-}: {
-  items: { id: number; nombre: string; count: number }[];
-  selectedId: number | null;
-  onSelect?: (id: number | null) => void;
-}) {
-  if (!items || items.length === 0) return null;
-
-  const style = (active: boolean) =>
-    `w-full flex justify-between items-center px-3 py-1.5 rounded-md text-sm font-medium transition ${
-      active
-        ? "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
-        : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-    }`;
-
-  return (
-    <div className="mt-6">
-      <h3 className="font-semibold text-base mb-3 text-zinc-800 dark:text-zinc-100">Tipo de promoción</h3>
-      <ul className="space-y-1">
-        <li>
-          <button type="button" className={style(selectedId === null)} onClick={() => onSelect?.(null)}>
-            <span className="truncate">Todas</span>
-            <ChevronRight className="w-4 h-4 opacity-50" />
-          </button>
-        </li>
-        {items.map((it) => (
-          <li key={it.id}>
-            <button type="button" className={style(selectedId === it.id)} onClick={() => onSelect?.(it.id)}>
-              <span className="truncate">
-                {it.nombre}
-                {typeof it.count === "number" ? ` (${it.count})` : ""}
-              </span>
-              <ChevronRight className="w-4 h-4 opacity-50" />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+// (las implementaciones reales están arriba del archivo)
