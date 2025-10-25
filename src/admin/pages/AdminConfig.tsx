@@ -10,7 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { API_URL, get, post, put, del } from "@/api/base";
+import { get, post, put, del } from "@/api/base";
 
 export default function AdminConfig() {
   const [whatsapp, setWhatsapp] = useState("");
@@ -75,7 +75,7 @@ export default function AdminConfig() {
       }
     };
     fetchAll();
-  }, [API_URL]);
+  }, []);
 
   // 💾 Guardar número WhatsApp
   const handleSave = async () => {

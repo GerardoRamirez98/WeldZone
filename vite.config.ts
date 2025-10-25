@@ -32,7 +32,8 @@ export default defineConfig(({ mode }) => {
             ],
             charts: ["recharts"], // Agrega Recharts al chunk de gráficos
             state: ["zustand"], // Agrega Zustand al chunk de estado
-            utils: ["zod"], // Agrega Zod al chunk de utilidades
+            // Nota: eliminar este chunk evita advertencias de chunk vacío si zod
+            // no aporta código en tiempo de ejecución (sólo tipos en TS)
           },
         },
       },

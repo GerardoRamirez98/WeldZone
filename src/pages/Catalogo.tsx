@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "../components/ProductCard";
@@ -8,6 +8,7 @@ import CartFloatingButton from "../components/CartFloatingButton";
 import SidebarCategorias from "../components/SidebarCategorias";
 import { useCategorias } from "@/hooks/useCategories";
 import { exportProductsPdf } from "@/utils/pdf";
+import { toast } from "sonner";
 
 export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,12 +44,22 @@ export default function Catalogo() {
   const categoriaActual = categoriaSeleccionada === null ? null : categoriasConProductos.find((c) => c.id === categoriaSeleccionada);
 
   const handleExport = async () => {
+    const toastId = toast.loading("Generando PDF...");
     try {
+      // Heurísticas de rendimiento (mobile y catálogos grandes)
+      const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const many = filtered.length > 80; // umbral para acelerar
       await exportProductsPdf(filtered, {
         title: "Listado de productos",
+        includeImages: !(isMobile || many),
+        imageMaxDim: isMobile ? 160 : 256,
+        imageQuality: isMobile ? 0.6 : 0.75,
+        concurrency: isMobile ? 3 : 6,
       });
+      toast.success("PDF generado", { id: toastId });
     } catch (e) {
       console.error("No se pudo exportar el PDF", e);
+      toast.error("No se pudo generar el PDF", { id: toastId });
     }
   };
 

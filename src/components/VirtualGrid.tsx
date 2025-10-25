@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type GetColumnCount = (containerWidth: number) => number;
 
@@ -107,4 +108,3 @@ export function VirtualGrid<T>({
 }
 
 export default VirtualGrid;
-

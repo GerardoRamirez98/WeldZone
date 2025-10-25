@@ -89,10 +89,18 @@ export default function Products() {
                 categoriaId === "all"
                   ? undefined
                   : categorias.find((c) => c.id === categoriaId)?.nombre;
+              const id = toast.loading("Generando PDF...");
+              const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+              const many = filteredForPdf.length > 80;
               await exportProductsPdf(filteredForPdf, {
                 title: "Listado de Productos",
                 categoryName: catName,
+                includeImages: !(isMobile || many),
+                imageMaxDim: isMobile ? 160 : 256,
+                imageQuality: isMobile ? 0.6 : 0.75,
+                concurrency: isMobile ? 3 : 6,
               });
+              toast.success("PDF generado", { id });
             } catch (err) {
               console.error("Error exportando PDF:", err);
               toast.error("No se pudo generar el PDF");
@@ -180,4 +188,3 @@ export default function Products() {
     </div>
   );
 }
-

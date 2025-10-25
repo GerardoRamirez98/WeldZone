@@ -17,9 +17,10 @@ export default function Home() {
   const { data: categorias = [] } = useCategorias();
 
   const whatsappHref = config?.whatsapp
-    ? `https://wa.me/${config.whatsapp.replace(/[^\d]/g, "")}?text=${encodeURIComponent(
-        "Hola, me interesa cotizar productos."
-      )}`
+    ? `https://wa.me/${config.whatsapp.replace(
+        /[^\d]/g,
+        ""
+      )}?text=${encodeURIComponent("Hola, me interesa cotizar productos.")}`
     : undefined;
 
   const featured = useMemo(() => {
@@ -67,7 +68,7 @@ export default function Home() {
                   href={whatsappHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block w-full sm:w-auto text-center bg-white dark:bg-white text-zinc-900 dark:text-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:bg-white hover:text-zinc-900 font-semibold py-3 px-6 rounded-xl transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                  className="inline-block w-full sm:w-auto text-center bg-white dark:bg-white !text-black dark:!text-black border border-zinc-200 dark:border-zinc-700 hover:bg-white hover:!text-black font-semibold py-3 px-6 rounded-xl transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                 >
                   Cotizar por WhatsApp
                 </a>
@@ -104,11 +105,14 @@ export default function Home() {
 
       {/* Categorías destacadas (dinámicas) */}
       <section className="container mx-auto px-6 py-16">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6">Categorías destacadas</h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-6">
+          Categorías destacadas
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {(() => {
             const counts = products.reduce((acc: Record<number, number>, p) => {
-              if (p.categoriaId) acc[p.categoriaId] = (acc[p.categoriaId] || 0) + 1;
+              if (p.categoriaId)
+                acc[p.categoriaId] = (acc[p.categoriaId] || 0) + 1;
               return acc;
             }, {} as Record<number, number>);
             const featuredCats = categorias
@@ -125,7 +129,9 @@ export default function Home() {
                 <span className="block text-lg font-semibold capitalize">
                   {c.nombre}
                 </span>
-                <span className="text-zinc-500 text-sm">{counts[c.id]} producto(s)</span>
+                <span className="text-zinc-500 text-sm">
+                  {counts[c.id]} producto(s)
+                </span>
               </Link>
             ));
           })()}
@@ -135,7 +141,9 @@ export default function Home() {
       {/* Productos destacados */}
       <section className="container mx-auto px-6 pb-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold">Productos destacados</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">
+            Productos destacados
+          </h2>
           <Link
             to="/catalogo"
             className="hidden sm:inline-block text-sm font-semibold text-yellow-600 dark:text-yellow-400 hover:underline"
@@ -145,7 +153,9 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {loading
-            ? Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))
             : featured.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
         <div className="sm:hidden mt-6">
@@ -161,9 +171,12 @@ export default function Home() {
       {/* CTA final */}
       <section className="container mx-auto px-6 pb-20">
         <div className="rounded-2xl p-8 md:p-10 bg-gradient-to-br from-yellow-500/10 to-transparent border border-yellow-500/20">
-          <h3 className="text-xl md:text-2xl font-bold">¿Listo para optimizar tu taller?</h3>
+          <h3 className="text-xl md:text-2xl font-bold">
+            ¿Listo para optimizar tu taller?
+          </h3>
           <p className="text-zinc-600 dark:text-zinc-300">
-            Comienza revisando el catálogo o escríbenos para una cotización rápida.
+            Comienza revisando el catálogo o escríbenos para una cotización
+            rápida.
           </p>
           <div className="mt-5 flex gap-3">
             <Link
@@ -177,7 +190,7 @@ export default function Home() {
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block w-full sm:w-auto text-center bg-white dark:bg-white text-zinc-900 dark:text-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:bg-white hover:text-zinc-900 font-semibold py-2.5 px-5 rounded-xl shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                className="inline-block w-full sm:w-auto text-center bg-white dark:bg-white !text-black dark:!text-black border border-zinc-200 dark:border-zinc-700 hover:bg-white hover:!text-black font-semibold py-2.5 px-5 rounded-xl shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
               >
                 Cotizar por WhatsApp
               </a>

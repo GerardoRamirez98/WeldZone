@@ -1,8 +1,14 @@
 import jsPDF from "jspdf";
+import type { TextOptionsLight } from "jspdf";
 import type { Product } from "@/types/products";
-import logoLight from "@/assets/logo-light.png";
+import logoLight from "@/assets/logo-light-trazo.png";
 
-/** Convierte una URL de imagen a DataURL */
+const IS_DEV: boolean =
+  (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV ?? false;
+const devDebug = (...args: unknown[]) => {
+  if (IS_DEV) console.debug("[pdf]", ...args);
+};
+
 async function toDataURL(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, { credentials: "omit" });
@@ -19,7 +25,78 @@ async function toDataURL(url: string): Promise<string | null> {
   }
 }
 
-/** Formatea número a moneda MXN */
+async function toDataURLOptimized(
+  url: string,
+  {
+    maxDim = 256,
+    quality = 0.75,
+    preferPng = false,
+  }: { maxDim?: number; quality?: number; preferPng?: boolean } = {}
+): Promise<string | null> {
+  try {
+    const res = await fetch(url, { credentials: "omit" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+
+    let bmp: ImageBitmap | null = null;
+    if (typeof createImageBitmap === "function") {
+      try {
+        bmp = await createImageBitmap(blob);
+      } catch (err) {
+        devDebug("createImageBitmap failed", err);
+        bmp = null;
+      }
+    }
+
+    const dims = await (async () => {
+      if (bmp) return { w: bmp.width, h: bmp.height, img: bmp as ImageBitmap };
+      return await new Promise<{
+        w: number;
+        h: number;
+        img: HTMLImageElement | ImageBitmap;
+      } | null>((resolve) => {
+        const img = new Image();
+        img.onload = () =>
+          resolve({ w: img.naturalWidth, h: img.naturalHeight, img });
+        img.onerror = () => resolve(null);
+        img.src = URL.createObjectURL(blob);
+      });
+    })();
+    if (!dims) return await toDataURL(url);
+
+    const { w, h, img } = dims;
+    const scale = Math.min(1, maxDim / Math.max(w, h));
+    const outW = Math.max(1, Math.round(w * scale));
+    const outH = Math.max(1, Math.round(h * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return await toDataURL(url);
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    if ("close" in img && typeof (img as ImageBitmap).close === "function") {
+      ctx.drawImage(img as ImageBitmap, 0, 0, outW, outH);
+      (img as ImageBitmap).close();
+    } else {
+      ctx.drawImage(img as HTMLImageElement, 0, 0, outW, outH);
+      try {
+        URL.revokeObjectURL((img as HTMLImageElement).src);
+      } catch (err) {
+        devDebug("revokeObjectURL failed", err);
+      }
+    }
+
+    if (preferPng) return canvas.toDataURL("image/png");
+    return canvas.toDataURL("image/jpeg", quality);
+  } catch (err) {
+    console.warn("Error optimizando imagen a Base64:", err);
+    return null;
+  }
+}
+
 function money(n: number): string {
   try {
     return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -29,15 +106,16 @@ function money(n: number): string {
 }
 
 type ExportOptions = {
-  title?: string; // Título del documento (header de página)
-  logoUrl?: string; // URL opcional del logo
-  // Encabezado general (solo primera página)
-  companyName?: string;
-  rfc?: string;
-  address?: string;
-  phones?: string; // "474xxxx, 33xxxx"
-  city?: string; // "Lagos de Moreno, Jal."
-  showGeneralHeader?: boolean;
+  title?: string;
+  logoUrl?: string;
+  gradientA?: [number, number, number] | string;
+  gradientB?: [number, number, number] | string;
+  newPagePerCategory?: boolean;
+  includeImages?: boolean;
+  imageMaxDim?: number;
+  imageQuality?: number;
+  concurrency?: number;
+  categoryName?: string; // compat
 };
 
 export async function exportProductsPdf(
@@ -51,51 +129,64 @@ export async function exportProductsPdf(
 
   const title = opts.title ?? "Lista de Precios WeldZone";
 
-  // 🎨 Degradado dorado–naranja
-  const gradientA = [247, 181, 0]; // #F7B500
-  const gradientB = [255, 107, 0]; // #FF6B00
+  // Paleta por defecto: Acero frío (azul → índigo)
+  const defaultB: [number, number, number] = [247, 181, 0]; // #F7B500
 
-  function drawGradient(yStart: number, height: number) {
-    const steps = 40;
-    for (let i = 0; i < steps; i++) {
-      const t = i / (steps - 1);
-      const r = gradientA[0] + t * (gradientB[0] - gradientA[0]);
-      const g = gradientA[1] + t * (gradientB[1] - gradientA[1]);
-      const b = gradientA[2] + t * (gradientB[2] - gradientA[2]);
-      doc.setFillColor(r, g, b);
-      doc.rect(0, yStart + (height / steps) * i, pageW, height / steps, "F");
+  const parseRGB = (
+    v: [number, number, number] | string | undefined,
+    fallback: [number, number, number]
+  ): [number, number, number] => {
+    if (!v) return fallback;
+    if (Array.isArray(v) && v.length === 3)
+      return [v[0] as number, v[1] as number, v[2] as number];
+    if (typeof v === "string") {
+      let hex = v.trim();
+      if (hex.startsWith("#")) hex = hex.slice(1);
+      if (hex.length === 3)
+        hex = hex
+          .split("")
+          .map((c) => c + c)
+          .join("");
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      if ([r, g, b].every((n) => Number.isFinite(n))) return [r, g, b];
     }
-  }
+    return fallback;
+  };
+  const headerColor = parseRGB(opts.gradientB, defaultB);
 
-  /** Header de página (degradado + logo + título + página) */
   const drawPageHeader = async (pageNum: number) => {
-    drawGradient(0, 18);
-    // Logo
+    // Encabezado sólido
+    doc.setFillColor(headerColor[0], headerColor[1], headerColor[2]);
+    doc.rect(0, 0, pageW, 18, "F");
     let logoData: string | null = null;
     try {
       const logoPath = opts.logoUrl ?? logoLight;
-      logoData = await toDataURL(logoPath);
+      logoData = await toDataURLOptimized(logoPath, {
+        maxDim: 256,
+        quality: 0.85,
+        preferPng: true,
+      });
     } catch (err) {
       console.warn("No se pudo cargar el logo:", err);
     }
     if (logoData) {
       try {
-        doc.addImage(logoData, "PNG", margin, 3, 22, 12, undefined, "FAST");
+        doc.addImage(logoData, "PNG", margin, 3, 55, 12, undefined, "FAST");
       } catch (err) {
         console.warn("Error insertando el logo:", err);
       }
     }
-
-    // Título + número de página
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
-    doc.text(title, margin + 28, 9);
+    // Centrar título en el encabezado
+    doc.text(title, pageW / 2, 9, { align: "center" } as TextOptionsLight);
     doc.setFontSize(9);
     doc.text(`Página ${pageNum}`, pageW - margin - 18, 9);
   };
 
-  /** Footer con fecha y número de página */
   const drawFooter = (pageNum: number) => {
     const ts = new Date().toLocaleString("es-MX");
     doc.setFontSize(9);
@@ -104,137 +195,41 @@ export async function exportProductsPdf(
     doc.setTextColor(0);
   };
 
-  /** Encabezado general (solo en la primera página) */
-  /*
-  const drawGeneralHeader = () => {
-    const company = opts.companyName ?? "WELD ZONE";
-    const rfc = opts.rfc ?? "R.F.C. WZO220810LH9";
-    const address =
-      opts.address ?? "Margarito González Rubio 1195 C, C.P. 37110";
-    const phones = opts.phones ?? "4741178597, 4741129867";
-    const city = opts.city ?? "Lagos de Moreno, Jalisco";
-    const y0 = 22;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(30, 30, 30);
-    doc.text("Lista de precios", margin, y0);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text(company, margin + 70, y0);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(`${rfc}`, margin, y0 + 6);
-    doc.text(`${address}`, margin, y0 + 11);
-    doc.text(`${phones}  ${city}`, margin, y0 + 16);
-
-    // Línea divisoria
-    doc.setDrawColor(210);
-    doc.line(margin, y0 + 20, pageW - margin, y0 + 20);
-  };
-  */
-  // Encabezado general reintroducido con mejor composicion
-  function drawGeneralInfo(): number {
-    const company = opts.companyName ?? "WELD ZONE";
-    const rfc = opts.rfc ?? "R.F.C. WZO220810LH9";
-    const address =
-      opts.address ?? "Margarito Gonzalez Rubio 1195 C, C.P. 37110";
-    const phones = opts.phones ?? "4741178597, 4741129867";
-    const city = opts.city ?? "Lagos de Moreno, Jalisco";
-
-    // Box and columns
-    const y0 = 22; // under gradient header
-    const boxX = margin;
-    const boxW = pageW - margin * 2;
-    const gap = 6;
-    const colW = (boxW - gap) / 2;
-    const pad = 3;
-    const leftX = boxX + pad;
-    const rightX = boxX + colW + gap + pad;
-
-    const toLines = (text: string, width: number): string[] => {
-      const out = doc.splitTextToSize(text, width);
-      return Array.isArray(out) ? out : [String(out)];
-    };
-
-    // Compute lines and height
-    const leftLines = [
-      ...toLines(`Direccion: ${address}`, colW - pad * 2),
-      ...toLines(`Ciudad: ${city}`, colW - pad * 2),
-    ];
-    const rightLines = [
-      ...toLines(`RFC: ${rfc}`, colW - pad * 2),
-      ...toLines(`Tel: ${phones}`, colW - pad * 2),
-    ];
-
-    const titleH = 6;
-    const lineH = 4;
-    const maxLines = Math.max(leftLines.length, rightLines.length);
-    const blockH = titleH + 2 + maxLines * lineH + 4; // top/bottom padding
-
-    // Background box
-    doc.setDrawColor(225);
-    doc.setFillColor(250, 250, 250);
-    doc.rect(boxX, y0 - 4, boxW, blockH, "FD");
-
-    // Content
-    let y = y0 + 2;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(30, 30, 30);
-    doc.text(company, leftX, y);
-
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(60, 60, 60);
-
-    let yL = y;
-    for (const ln of leftLines) {
-      doc.text(ln, leftX, yL);
-      yL += lineH;
+  const isMobile =
+    typeof navigator !== "undefined" &&
+    /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const includeImages = opts.includeImages ?? !isMobile;
+  let imageDataMap = new Map<string | number, string | null>();
+  if (includeImages) {
+    const limit = Math.max(
+      1,
+      Math.floor(opts.concurrency ?? (isMobile ? 3 : 6))
+    );
+    const queue = [...products];
+    const results: Array<[string | number, string | null]> = [];
+    async function worker() {
+      while (queue.length) {
+        const p = queue.shift()!;
+        const src = p.imagenUrl || "";
+        const ext = src.toLowerCase();
+        const dataUrl = src
+          ? await toDataURLOptimized(src, {
+              maxDim: opts.imageMaxDim ?? (isMobile ? 160 : 256),
+              quality: opts.imageQuality ?? (isMobile ? 0.6 : 0.75),
+              preferPng: ext.endsWith(".png") || ext.endsWith(".webp"),
+            })
+          : null;
+        results.push([p.id, dataUrl]);
+      }
     }
-
-    let yR = y;
-    for (const ln of rightLines) {
-      doc.text(ln, rightX, yR);
-      yR += lineH;
-    }
-    doc.setTextColor(0, 0, 0);
-
-    const yEnd = y0 - 4 + blockH;
-    doc.setDrawColor(210);
-    doc.line(margin, yEnd, pageW - margin, yEnd);
-
-    return yEnd + 4;
+    const workers = Array.from(
+      { length: Math.min(limit, Math.max(1, products.length)) },
+      () => worker()
+    );
+    await Promise.all(workers);
+    imageDataMap = new Map(results);
   }
 
-  /** Asegura espacio; si no cabe, crea nueva página */
-  async function ensureSpace(
-    needed: number,
-    state: { y: number; page: number }
-  ) {
-    if (state.y + needed > pageH - margin) {
-      doc.addPage();
-      state.page += 1;
-      state.y = 26;
-      await drawPageHeader(state.page);
-      drawFooter(state.page);
-    }
-  }
-
-  // 🔄 Precarga imágenes de productos (map por id)
-  const imageDataMap = new Map<string | number, string | null>(
-    await Promise.all(
-      products.map(async (p) => {
-        const dataUrl = p.imagenUrl ? await toDataURL(p.imagenUrl) : null;
-        return [p.id, dataUrl] as const;
-      })
-    )
-  );
-
-  // 🗂️ Agrupar por categoría
   const grouped = products.reduce((acc, p) => {
     const cat = p.categoria?.nombre || "Sin categoría";
     if (!acc[cat]) acc[cat] = [];
@@ -242,29 +237,26 @@ export async function exportProductsPdf(
     return acc;
   }, {} as Record<string, Product[]>);
 
-  // ▶️ Comienzo
   let y = 26;
   let pageNum = 1;
   await drawPageHeader(pageNum);
   drawFooter(pageNum);
 
-  // Encabezado general (solo primera página)
-  // drawGeneralHeader(); // eliminado
-  y = opts.showGeneralHeader === false ? 26 : drawGeneralInfo();
-
   let globalTotal = 0;
+  const newPagePerCategory = opts.newPagePerCategory !== false;
+  let firstCategory = true;
 
-  // 🔹 Iterar categorías
   for (const [catName, catProducts] of Object.entries(grouped)) {
-    // Título de categoría
-    await ensureSpace(12, { y, page: pageNum }); // llamado con copia; actualizamos manualmente abajo
-    if (y + 12 > pageH - margin) {
+    if (!firstCategory && newPagePerCategory) {
       doc.addPage();
       pageNum++;
       y = 26;
       await drawPageHeader(pageNum);
       drawFooter(pageNum);
     }
+    firstCategory = false;
+
+    // Título de categoría
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(40, 40, 40);
@@ -274,27 +266,27 @@ export async function exportProductsPdf(
     doc.line(margin, y, pageW - margin, y);
     y += 4;
 
-    // Productos
+    let processed = 0;
     for (const p of catProducts) {
-      const thumb = 16; // tamaño de mini imagen
-      const gap = 4; // separación imagen-texto
+      const thumb = 16;
+      const gap = 4;
       const leftX = margin;
-      const textX = leftX + thumb + gap;
+      const textX = leftX + (includeImages ? thumb + gap : 0);
       const textMaxW = pageW - margin - textX;
 
-      // Calcula altura estimada (nombre + precio + desc)
       const desc = p.descripcion?.trim() || "Sin descripción disponible.";
       const descLines = doc.splitTextToSize(desc, textMaxW);
-      const blockH = Math.max(thumb, 4 + 6 + descLines.length * 4 + 4); // margen superior + nombre + desc + margen inferior
+      const blockH = Math.max(
+        includeImages ? thumb : 0,
+        4 + 6 + descLines.length * 4 + 4
+      );
 
-      // Salto de página si no cabe
       if (y + blockH > pageH - margin) {
         doc.addPage();
         pageNum++;
         y = 26;
         await drawPageHeader(pageNum);
         drawFooter(pageNum);
-        // Repetir título de categoría si el bloque quedó partido
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
         doc.setTextColor(40, 40, 40);
@@ -305,29 +297,29 @@ export async function exportProductsPdf(
         y += 4;
       }
 
-      // Imagen (si existe)
-      const dataUrl = imageDataMap.get(p.id);
-      if (dataUrl) {
-        try {
-          const format = p.imagenUrl?.toLowerCase().endsWith(".png")
-            ? "PNG"
-            : "JPEG";
-          // Marco gris de fondo (placeholder visual uniforme)
-          doc.setDrawColor(210);
-          doc.rect(leftX, y, thumb, thumb);
-          doc.addImage(
-            dataUrl,
-            format,
-            leftX,
-            y,
-            thumb,
-            thumb,
-            undefined,
-            "FAST"
-          );
-        } catch (err) {
-          console.warn(`Error insertando imagen de "${p.nombre}":`, err);
-          // placeholder si falla
+      if (includeImages) {
+        const dataUrl = imageDataMap.get(p.id);
+        if (dataUrl) {
+          try {
+            const format = (dataUrl as string).startsWith("data:image/png")
+              ? "PNG"
+              : "JPEG";
+            doc.setDrawColor(210);
+            doc.rect(leftX, y, thumb, thumb);
+            doc.addImage(
+              dataUrl as string,
+              format,
+              leftX,
+              y,
+              thumb,
+              thumb,
+              undefined,
+              "FAST"
+            );
+          } catch (err) {
+            devDebug("addImage failed", err);
+          }
+        } else {
           doc.setDrawColor(210);
           doc.setFillColor(245, 245, 245);
           doc.rect(leftX, y, thumb, thumb, "FD");
@@ -337,25 +329,13 @@ export async function exportProductsPdf(
           doc.text("Sin\na\nimagen", leftX + 3, y + 5);
           doc.setTextColor(0);
         }
-      } else {
-        // placeholder si no hay dataUrl
-        doc.setDrawColor(210);
-        doc.setFillColor(245, 245, 245);
-        doc.rect(leftX, y, thumb, thumb, "FD");
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(130);
-        doc.text("Sin\na\nimagen", leftX + 3, y + 5);
-        doc.setTextColor(0);
       }
 
-      // Texto (nombre, precio, descripción)
       doc.setTextColor(30, 30, 30);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.text(p.nombre || "Sin nombre", textX, y + 4);
 
-      // Precio a la derecha del nombre (mismo renglón)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(247, 181, 0);
@@ -364,17 +344,19 @@ export async function exportProductsPdf(
       doc.text(priceStr, pageW - margin - priceW, y + 4);
       doc.setTextColor(0);
 
-      // Descripción
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.text(descLines, textX, y + 10);
 
-      // Separador del ítem
       const yEnd = y + blockH;
       doc.setDrawColor(225);
       doc.line(margin, yEnd + 1, pageW - margin, yEnd + 1);
+      y = yEnd + 4;
 
-      y = yEnd + 4; // espacio inferior
+      processed++;
+      if (isMobile && processed % 10 === 0) {
+        await new Promise<void>((r) => setTimeout(r, 0));
+      }
     }
 
     // Subtotal por categoría
@@ -389,7 +371,7 @@ export async function exportProductsPdf(
     doc.setFontSize(10);
     doc.setTextColor(80);
     doc.text(
-      `Total de productos en ${catName}: ${catProducts.length}`,
+      `Total de productos en ${catName}: ${catProducts.length}` as string,
       margin,
       y + 5
     );
@@ -398,8 +380,7 @@ export async function exportProductsPdf(
     globalTotal += catProducts.length;
   }
 
-  // Resumen general
-  if (y + 16 > pageH - margin) {
+  if (y + 12 > pageH - margin) {
     doc.addPage();
     pageNum++;
     y = 26;
@@ -418,6 +399,5 @@ export async function exportProductsPdf(
   doc.text(`Total general de productos: ${globalTotal}`, margin, y);
   doc.setTextColor(0);
 
-  // Guardado
   doc.save("Lista_Precios_WeldZone.pdf");
 }
