@@ -40,7 +40,7 @@ export default function ProductCard({ product }: { product: Product }) {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <div
-          className="group relative rounded-2xl border bg-white p-3 shadow-sm transition 
+          className="group relative rounded-2xl border bg-white p-2.5 sm:p-3 shadow-sm transition 
           border-zinc-200 hover:shadow-md hover:scale-[1.01]
           dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer"
         >
@@ -98,11 +98,11 @@ export default function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* 📝 Info */}
-          <div className="mt-3">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
+          <div className="mt-2.5 sm:mt-3">
+            <h3 className="text-[13px] sm:text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
               {product.nombre}
             </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3">
+            <p className="text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-3 min-h-[28px] sm:min-h-0">
               {product.descripcion || "Sin descripción"}...
             </p>
             <p className="mt-1 text-sm font-bold text-orange-500 dark:text-orange-400">
@@ -170,7 +170,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
               {product.descripcion || "Sin descripción disponible."}
             </p>
-            <p className="mt-2 text-base font-bold text-yellow-600 dark:text-yellow-400">
+            <p className="mt-2 text-base sm:text-lg font-bold text-yellow-600 dark:text-yellow-400">
               ${product.precio.toLocaleString("es-MX")} MXN
             </p>
 
