@@ -31,6 +31,7 @@ export default function Header({
     { to: "/", label: "Inicio" },
     { to: "/catalogo", label: "Catálogo" },
     { to: "/nosotros", label: "Nosotros" },
+    { to: "/contacto", label: "Contáctanos" },
   ];
 
   return (
@@ -170,3 +171,4 @@ export default function Header({
     </header>
   );
 }
+

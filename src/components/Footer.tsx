@@ -73,7 +73,7 @@ export default function Footer() {
           <h3 className="text-yellow-400 font-semibold mb-3">Síguenos</h3>
           <div className="flex space-x-4 text-xl">
             <a
-              href="https://www.facebook.com/profile.php?id=61579354317811"
+              href="https://www.facebook.com/WeldZoneLagosDeMoreno"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-yellow-400 transition-colors"
