@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
+import Home from "./pages/Home";
 import Nosotros from "./pages/Nosotros";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -19,12 +20,13 @@ import { useMaintenance } from "./hooks/useMaintenance";
 import Error404 from "./pages/errors/Error404";
 import Error503 from "./pages/errors/Error503";
 import Error500 from "./pages/errors/Error500";
+import Error403 from "./pages/errors/Error403";
 
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = location.pathname.startsWith("/admin");
-  const isCatalogo = location.pathname === "/";
+  const isCatalogo = location.pathname === "/catalogo";
   const isLogin = location.pathname === "/login";
 
   const [showFooter, setShowFooter] = useState(false);
@@ -107,10 +109,10 @@ export default function App() {
             else params.delete("q");
 
             // Navega al catálogo y sincroniza el query param
-            if (location.pathname !== "/") {
+            if (location.pathname !== "/catalogo") {
               navigate(
                 {
-                  pathname: "/",
+                  pathname: "/catalogo",
                   search: params.toString() ? `?${params.toString()}` : "",
                 },
                 { replace: false }
@@ -136,9 +138,11 @@ export default function App() {
           ) : (
             <>
               {/* 🌐 Rutas públicas */}
-              <Route path="/" element={<Catalogo />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/nosotros" element={<Nosotros />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/acceso-denegado" element={<Error403 />} />
 
               {/* 🛠️ Panel Admin protegido */}
               <Route

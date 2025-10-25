@@ -58,6 +58,7 @@ export function useApi() {
 
           case 403:
             toast.error("No tienes permiso para acceder a esta sección.");
+            navigate("/acceso-denegado");
             break;
 
           case 500:

@@ -28,7 +28,8 @@ export default function Header({
   );
 
   const links = [
-    { to: "/", label: "Catálogo" },
+    { to: "/", label: "Inicio" },
+    { to: "/catalogo", label: "Catálogo" },
     { to: "/nosotros", label: "Nosotros" },
   ];
 
@@ -44,12 +45,12 @@ export default function Header({
             <img
               src={logoDark}
               alt="WeldZone Logo"
-              className="h-[60px] w-[210px] object-contain dark:hidden"
+              className="h-[42px] w-[150px] sm:h-[50px] sm:w-[180px] md:h-[60px] md:w-[210px] object-contain dark:hidden"
             />
             <img
               src={logoLight}
               alt="WeldZone Logo"
-              className="h-[60px] w-[210px] object-contain hidden dark:block"
+              className="h-[42px] w-[150px] sm:h-[50px] sm:w-[180px] md:h-[60px] md:w-[210px] object-contain hidden dark:block"
             />
           </div>
           <EstadoTienda />

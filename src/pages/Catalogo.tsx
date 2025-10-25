@@ -12,13 +12,12 @@ import { exportProductsPdf } from "@/utils/pdf";
 export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
+  const catParam = searchParams.get("cat");
   const { data: categorias = [], isLoading: loadingCategorias } = useCategorias();
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<number | null>(null);
-
-  // Siempre al montar o recargar, forzamos la selección "Todas"
-  useEffect(() => {
-    setCategoriaSeleccionada(null);
-  }, []);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<number | null>(() => {
+    const n = catParam ? Number(catParam) : NaN;
+    return Number.isFinite(n) ? n : null;
+  });
 
   const { products, loading, error } = useProducts();
 
@@ -64,7 +63,13 @@ export default function Catalogo() {
       <SidebarCategorias
         categorias={categoriasConProductos}
         categoriaSeleccionada={categoriaSeleccionada}
-        onSelect={setCategoriaSeleccionada}
+        onSelect={(id) => {
+          setCategoriaSeleccionada(id);
+          const params = new URLSearchParams(searchParams);
+          if (id === null) params.delete("cat");
+          else params.set("cat", String(id));
+          setSearchParams(params, { replace: true });
+        }}
         totalProductos={filtered.length}
         categoriaActualNombre={categoriaActual?.nombre || null}
         loading={loading || loadingCategorias}
