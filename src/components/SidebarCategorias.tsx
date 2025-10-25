@@ -111,7 +111,7 @@ export default function SidebarCategorias({
                 setOpen(false);
               }}
             />
-            <PriceFilter min={priceMin} max={priceMax} onApply={(min, max) => { onApplyPrice?.(min, max); setOpen(false); }} />
+            <PriceFilter min={priceMin} max={priceMax} onApply={(min, max) => { onApplyPrice?.(min, max); }} />
             <PromoList items={promociones} selectedId={selectedPromoId} onSelect={(id) => { onSelectPromo?.(id); setOpen(false); }} />
           </div>
         </div>
@@ -239,13 +239,41 @@ function PriceFilter({
   const [localMin, setLocalMin] = useState<string>(min != null ? String(min) : "");
   const [localMax, setLocalMax] = useState<string>(max != null ? String(max) : "");
 
+  // Mantén sincronizado el estado local si cambian los props
   useEffect(() => setLocalMin(min != null ? String(min) : ""), [min]);
   useEffect(() => setLocalMax(max != null ? String(max) : ""), [max]);
 
-  const apply = () => {
-    const m1 = localMin.trim() === "" ? null : Number(localMin);
-    const m2 = localMax.trim() === "" ? null : Number(localMax);
-    onApply?.(Number.isFinite(m1 as any) ? (m1 as number | null) : null, Number.isFinite(m2 as any) ? (m2 as number | null) : null);
+  // Auto-aplicar tras escribir (debounce)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const m1 = localMin.trim() === "" ? null : Number(localMin);
+      const m2 = localMax.trim() === "" ? null : Number(localMax);
+      const validMin = m1 != null && Number.isFinite(m1) ? m1 : null;
+      const validMax = m2 != null && Number.isFinite(m2) ? m2 : null;
+      onApply?.(validMin, validMax);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [localMin, localMax, onApply]);
+
+  const onMinChange = (val: string) => {
+    // Solo números y vacío
+    setLocalMin(val);
+    const nm = val.trim() === "" ? null : Number(val);
+    const curMax = localMax.trim() === "" ? null : Number(localMax);
+    if (nm != null && Number.isFinite(nm) && curMax != null && Number.isFinite(curMax) && nm > curMax) {
+      // Si min supera a max, ajusta max al nuevo min
+      setLocalMax(String(nm));
+    }
+  };
+
+  const onMaxChange = (val: string) => {
+    setLocalMax(val);
+    const nx = val.trim() === "" ? null : Number(val);
+    const curMin = localMin.trim() === "" ? null : Number(localMin);
+    if (nx != null && Number.isFinite(nx) && curMin != null && Number.isFinite(curMin) && nx < curMin) {
+      // Si max queda por debajo de min, baja min al nuevo max
+      setLocalMin(String(nx));
+    }
   };
 
   return (
@@ -257,7 +285,7 @@ function PriceFilter({
           inputMode="decimal"
           placeholder="Mínimo"
           value={localMin}
-          onChange={(e) => setLocalMin(e.target.value)}
+          onChange={(e) => onMinChange(e.target.value)}
           className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <span className="text-zinc-400">—</span>
@@ -266,18 +294,9 @@ function PriceFilter({
           inputMode="decimal"
           placeholder="Máximo"
           value={localMax}
-          onChange={(e) => setLocalMax(e.target.value)}
+          onChange={(e) => onMaxChange(e.target.value)}
           className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
         />
-        <button
-          type="button"
-          onClick={apply}
-          className="shrink-0 p-2 rounded-md bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200"
-          aria-label="Aplicar filtro de precio"
-          title="Aplicar"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
       </div>
     </div>
   );
