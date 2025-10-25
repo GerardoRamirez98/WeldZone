@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Filter, ChevronRight } from "lucide-react";
 
 interface Categoria {
@@ -15,6 +15,14 @@ interface SidebarCategoriasProps {
   categoriaActualNombre?: string | null;
   loading?: boolean;
   onExport?: () => void; // descarga de listado (opcional)
+  // price filter
+  priceMin?: number | null;
+  priceMax?: number | null;
+  onApplyPrice?: (min: number | null, max: number | null) => void;
+  // promotions (tags)
+  promociones?: { id: number; nombre: string; count: number }[];
+  selectedPromoId?: number | null;
+  onSelectPromo?: (id: number | null) => void;
 }
 
 export default function SidebarCategorias({
@@ -25,6 +33,12 @@ export default function SidebarCategorias({
   categoriaActualNombre,
   loading = false,
   onExport,
+  priceMin = null,
+  priceMax = null,
+  onApplyPrice,
+  promociones = [],
+  selectedPromoId = null,
+  onSelectPromo,
 }: SidebarCategoriasProps) {
   const [open, setOpen] = useState(false);
 
@@ -42,6 +56,8 @@ export default function SidebarCategorias({
         categoriaSeleccionada={categoriaSeleccionada}
         onSelect={onSelect}
       />
+      <PriceFilter min={priceMin} max={priceMax} onApply={onApplyPrice} />
+      <PromoList items={promociones} selectedId={selectedPromoId} onSelect={onSelectPromo} />
     </aside>
   );
 
@@ -95,6 +111,8 @@ export default function SidebarCategorias({
                 setOpen(false);
               }}
             />
+            <PriceFilter min={priceMin} max={priceMax} onApply={(min, max) => { onApplyPrice?.(min, max); setOpen(false); }} />
+            <PromoList items={promociones} selectedId={selectedPromoId} onSelect={(id) => { onSelectPromo?.(id); setOpen(false); }} />
           </div>
         </div>
       )}
@@ -204,6 +222,108 @@ function CategoryList({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// Precio: inputs Mínimo y Máximo con botón aplicar
+function PriceFilter({
+  min,
+  max,
+  onApply,
+}: {
+  min: number | null;
+  max: number | null;
+  onApply?: (min: number | null, max: number | null) => void;
+}) {
+  const [localMin, setLocalMin] = useState<string>(min != null ? String(min) : "");
+  const [localMax, setLocalMax] = useState<string>(max != null ? String(max) : "");
+
+  useEffect(() => setLocalMin(min != null ? String(min) : ""), [min]);
+  useEffect(() => setLocalMax(max != null ? String(max) : ""), [max]);
+
+  const apply = () => {
+    const m1 = localMin.trim() === "" ? null : Number(localMin);
+    const m2 = localMax.trim() === "" ? null : Number(localMax);
+    onApply?.(Number.isFinite(m1 as any) ? (m1 as number | null) : null, Number.isFinite(m2 as any) ? (m2 as number | null) : null);
+  };
+
+  return (
+    <div className="mt-5">
+      <h3 className="font-semibold text-base mb-2 text-zinc-800 dark:text-zinc-100">Precio</h3>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          placeholder="Mínimo"
+          value={localMin}
+          onChange={(e) => setLocalMin(e.target.value)}
+          className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+        <span className="text-zinc-400">—</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          placeholder="Máximo"
+          value={localMax}
+          onChange={(e) => setLocalMax(e.target.value)}
+          className="w-full rounded-md border bg-white px-2 py-1.5 text-sm outline-none border-zinc-300 text-zinc-900 placeholder:text-zinc-500 focus:border-yellow-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+        <button
+          type="button"
+          onClick={apply}
+          className="shrink-0 p-2 rounded-md bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200"
+          aria-label="Aplicar filtro de precio"
+          title="Aplicar"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Tipos de promoción (etiquetas)
+function PromoList({
+  items,
+  selectedId,
+  onSelect,
+}: {
+  items: { id: number; nombre: string; count: number }[];
+  selectedId: number | null;
+  onSelect?: (id: number | null) => void;
+}) {
+  if (!items || items.length === 0) return null;
+
+  const style = (active: boolean) =>
+    `w-full flex justify-between items-center px-3 py-1.5 rounded-md text-sm font-medium transition ${
+      active
+        ? "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+        : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+    }`;
+
+  return (
+    <div className="mt-6">
+      <h3 className="font-semibold text-base mb-3 text-zinc-800 dark:text-zinc-100">Tipo de promoción</h3>
+      <ul className="space-y-1">
+        <li>
+          <button type="button" className={style(selectedId === null)} onClick={() => onSelect?.(null)}>
+            <span className="truncate">Todas</span>
+            <ChevronRight className="w-4 h-4 opacity-50" />
+          </button>
+        </li>
+        {items.map((it) => (
+          <li key={it.id}>
+            <button type="button" className={style(selectedId === it.id)} onClick={() => onSelect?.(it.id)}>
+              <span className="truncate">
+                {it.nombre}
+                {typeof it.count === "number" ? ` (${it.count})` : ""}
+              </span>
+              <ChevronRight className="w-4 h-4 opacity-50" />
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

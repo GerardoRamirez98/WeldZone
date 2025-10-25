@@ -14,6 +14,9 @@ export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const catParam = searchParams.get("cat");
+  const minParam = searchParams.get("min");
+  const maxParam = searchParams.get("max");
+  const promoParam = searchParams.get("promo");
   const { data: categorias = [], isLoading: loadingCategorias } = useCategorias();
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<number | null>(() => {
     const n = catParam ? Number(catParam) : NaN;
@@ -21,6 +24,12 @@ export default function Catalogo() {
   });
 
   const { products, loading, error } = useProducts();
+  const priceMin = useMemo(() => (minParam ? Number(minParam) : null), [minParam]);
+  const priceMax = useMemo(() => (maxParam ? Number(maxParam) : null), [maxParam]);
+  const selectedPromoId = useMemo(() => {
+    const n = promoParam ? Number(promoParam) : NaN;
+    return Number.isFinite(n) ? n : null;
+  }, [promoParam]);
 
   // Filtrar productos según búsqueda y categoría
   const filtered: Product[] = useMemo(() => {
@@ -28,9 +37,12 @@ export default function Catalogo() {
     return products.filter((p) => {
       const matchesSearch = !s || p.nombre.toLowerCase().includes(s) || (p.descripcion ?? "").toLowerCase().includes(s);
       const matchesCategory = categoriaSeleccionada === null || p.categoriaId === categoriaSeleccionada;
-      return matchesSearch && matchesCategory;
+      const matchesPrice = (priceMin === null || p.precio >= priceMin) && (priceMax === null || p.precio <= priceMax);
+      const tagId = p.etiquetaId ?? (p.etiqueta ? p.etiqueta.id : null);
+      const matchesPromo = selectedPromoId === null || tagId === selectedPromoId;
+      return matchesSearch && matchesCategory && matchesPrice && matchesPromo;
     });
-  }, [q, products, categoriaSeleccionada]);
+  }, [q, products, categoriaSeleccionada, priceMin, priceMax, selectedPromoId]);
 
   // Filtrar categorías con productos disponibles
   const categoriasConProductos = useMemo(() => {
@@ -42,6 +54,20 @@ export default function Catalogo() {
   }, [categorias, products]);
 
   const categoriaActual = categoriaSeleccionada === null ? null : categoriasConProductos.find((c) => c.id === categoriaSeleccionada);
+
+  // Tipos de promoción (etiquetas) disponibles dentro de la categoría actual
+  const promociones = useMemo(() => {
+    const map = new Map<number, { id: number; nombre: string; count: number }>();
+    const base = categoriaSeleccionada === null ? products : products.filter((p) => p.categoriaId === categoriaSeleccionada);
+    for (const p of base) {
+      const e = p.etiqueta ?? (p.etiquetaId ? { id: p.etiquetaId, nombre: "Etiqueta", color: "#999" } as any : null);
+      if (!e || !e.id) continue;
+      const current = map.get(e.id) ?? { id: e.id, nombre: e.nombre, count: 0 };
+      current.count += 1;
+      map.set(e.id, current);
+    }
+    return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [products, categoriaSeleccionada]);
 
   const handleExport = async () => {
     const toastId = toast.loading("Generando PDF...");
@@ -85,6 +111,21 @@ export default function Catalogo() {
         categoriaActualNombre={categoriaActual?.nombre || null}
         loading={loading || loadingCategorias}
         onExport={filtered.length > 0 ? handleExport : undefined}
+        priceMin={priceMin}
+        priceMax={priceMax}
+        onApplyPrice={(min, max) => {
+          const params = new URLSearchParams(searchParams);
+          if (min == null || Number.isNaN(min)) params.delete("min"); else params.set("min", String(min));
+          if (max == null || Number.isNaN(max)) params.delete("max"); else params.set("max", String(max));
+          setSearchParams(params, { replace: true });
+        }}
+        promociones={promociones}
+        selectedPromoId={selectedPromoId}
+        onSelectPromo={(id) => {
+          const params = new URLSearchParams(searchParams);
+          if (id === null) params.delete("promo"); else params.set("promo", String(id));
+          setSearchParams(params, { replace: true });
+        }}
       />
 
       <div className="flex-1">
