@@ -179,9 +179,9 @@ export default function Catalogo() {
                     <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2"></div>
                   </div>
                 ))
-              : filtered.map((p) => (
+                : filtered.map((p) => (
                   <motion.div key={p.id} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} transition={{ duration: 0.25 }}>
-                    <ProductCard product={p} />
+                    <ProductCard product={p} showAddButton />
                   </motion.div>
                 ))}
           </motion.section>

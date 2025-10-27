@@ -104,9 +104,9 @@ export default function Header({
               <button
                 type="button"
                 aria-label="Abrir menú"
-                className="p-2.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border bg-zinc-900 text-white hover:bg-zinc-800 transition-colors border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:border-zinc-200"
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4" />
               </button>
             </Dialog.Trigger>
             <Dialog.Portal>
@@ -171,4 +171,3 @@ export default function Header({
     </header>
   );
 }
-

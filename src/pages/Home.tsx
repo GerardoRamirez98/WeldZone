@@ -108,7 +108,7 @@ export default function Home() {
         <h2 className="text-2xl md:text-3xl font-bold mb-6">
           Categorías destacadas
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {(() => {
             const counts = products.reduce((acc: Record<number, number>, p) => {
               if (p.categoriaId)
@@ -126,7 +126,7 @@ export default function Home() {
                 to={{ pathname: "/catalogo", search: `?cat=${c.id}` }}
                 className="rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 hover:border-yellow-500/50 hover:shadow-[0_0_18px_rgba(250,204,21,0.15)] transition-colors"
               >
-                <span className="block text-lg font-semibold capitalize">
+                <span className="block text-base sm:text-lg font-semibold capitalize leading-tight break-words hyphens-auto line-clamp-2">
                   {c.nombre}
                 </span>
                 <span className="text-zinc-500 text-sm">
@@ -151,12 +151,18 @@ export default function Home() {
             Ver catálogo
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {loading
             ? Array.from({ length: 8 }).map((_, i) => (
-                <ProductSkeleton key={i} />
+                <div key={i} className={i >= 4 ? "hidden sm:block" : ""}>
+                  <ProductSkeleton />
+                </div>
               ))
-            : featured.map((p) => <ProductCard key={p.id} product={p} />)}
+            : featured.map((p, i) => (
+                <div key={p.id} className={i >= 4 ? "hidden sm:block" : ""}>
+                  <ProductCard product={p} />
+                </div>
+              ))}
         </div>
         <div className="sm:hidden mt-6">
           <Link

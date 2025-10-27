@@ -4,7 +4,7 @@ import type { Product } from "../types/products";
 import { useCart } from "../context/CartContext";
 import { useState, useEffect } from "react";
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, showAddButton = false }: { product: Product; showAddButton?: boolean }) {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [open, setOpen] = useState(false);
@@ -36,8 +36,10 @@ export default function ProductCard({ product }: { product: Product }) {
     ? product.imagenUrl.replace("/object/public/", "/render/image/public/")
     : "";
 
+  // Nota: permitimos que el carrito se abra por encima sin cerrar este modal.
+
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Root open={open} onOpenChange={setOpen} modal={false}>
       <Dialog.Trigger asChild>
         <div
           className="group relative rounded-2xl border bg-white p-2.5 sm:p-3 shadow-sm transition 
@@ -108,6 +110,22 @@ export default function ProductCard({ product }: { product: Product }) {
             <p className="mt-1 text-sm font-bold text-orange-500 dark:text-orange-400">
               ${product.precio.toLocaleString("es-MX")} MXN
             </p>
+            {showAddButton && (
+              <button
+                type="button"
+                aria-label="Agregar al carrito"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToCart(product, 1);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl h-9 px-3 text-sm font-medium transition bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[.99]"
+              >
+                <ShoppingCart className="h-4 w-4" /> Agregar
+              </button>
+            )}
           </div>
         </div>
       </Dialog.Trigger>
@@ -115,10 +133,13 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* 🟢 Modal de detalles */}
       {open && (
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-all" />
+          <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-all z-[950]" />
           <Dialog.Content
+            onInteractOutside={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
             className="fixed left-1/2 top-1/2 w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 
-    rounded-2xl border bg-white p-5 shadow-2xl border-zinc-200 
+    rounded-2xl border bg-white p-5 shadow-2xl border-zinc-200 z-[960]
     dark:border-zinc-800 dark:bg-zinc-900"
           >
             {/* ♿️ Accesibilidad para Radix */}

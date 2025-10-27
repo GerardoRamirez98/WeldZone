@@ -57,11 +57,14 @@ export default function CartModal() {
     <div className="space-y-4 text-zinc-800 dark:text-zinc-100">
       {/* 🔹 Encabezado */}
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Carrito de compra</h2>
+        <Dialog.Title className="text-lg font-semibold">Carrito de compra</Dialog.Title>
         <Dialog.Close>
           <X className="w-5 h-5 text-zinc-600 dark:text-zinc-300 hover:text-red-500 transition" />
         </Dialog.Close>
       </div>
+      <Dialog.Description className="sr-only">
+        Revisa los productos en tu carrito, ajusta cantidades o elimina artículos y envía tu pedido por WhatsApp.
+      </Dialog.Description>
 
       {/* 🔹 Contenido */}
       {cart.length === 0 ? (
