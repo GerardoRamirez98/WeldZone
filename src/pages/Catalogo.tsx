@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
+import { CircleHelp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
@@ -155,6 +156,21 @@ export default function Catalogo() {
           )}
         </div>
 
+        {/* Aviso/guía rápida */}
+        <div className="hidden sm:flex items-start gap-3 mb-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-yellow-50/50 dark:bg-zinc-900/40 p-3">
+          <div className="rounded-lg bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 p-1.5">
+            <CircleHelp className="w-4 h-4" />
+          </div>
+          <div className="text-sm">
+            <p className="text-zinc-700 dark:text-zinc-300">
+              ¿Primera vez? Aprende cómo cotizar o comprar paso a paso.
+            </p>
+            <Link to="/como-comprar" className="font-semibold text-yellow-700 dark:text-yellow-400 hover:underline">
+              Ver guía de compra
+            </Link>
+          </div>
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.section
             key={categoriaSeleccionada ?? "all"}
@@ -180,7 +196,12 @@ export default function Catalogo() {
                   </div>
                 ))
                 : filtered.map((p) => (
-                  <motion.div key={p.id} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} transition={{ duration: 0.25 }}>
+                  <motion.div
+                    key={p.id}
+                    variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                    transition={{ duration: 0.25 }}
+                    className="h-full"
+                  >
                     <ProductCard product={p} showAddButton />
                   </motion.div>
                 ))}

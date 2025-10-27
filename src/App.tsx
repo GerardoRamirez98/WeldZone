@@ -4,6 +4,7 @@ import Header from "./components/Header";
 import Catalogo from "./pages/Catalogo";
 import Home from "./pages/Home";
 import Nosotros from "./pages/Nosotros";
+import ComoComprar from "./pages/ComoComprar";
 import Contacto from "./pages/Contacto";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -142,6 +143,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/nosotros" element={<Nosotros />} />
+              <Route path="/como-comprar" element={<ComoComprar />} />
               <Route path="/contacto" element={<Contacto />} />
               <Route path="/login" element={<Login />} />
               <Route path="/acceso-denegado" element={<Error403 />} />

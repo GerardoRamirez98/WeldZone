@@ -44,7 +44,7 @@ export default function ProductCard({ product, showAddButton = false }: { produc
         <div
           className="group relative rounded-2xl border bg-white p-2.5 sm:p-3 shadow-sm transition 
           border-zinc-200 hover:shadow-md hover:scale-[1.01]
-          dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer"
+          dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer h-full flex flex-col"
         >
           {/* 🏷️ Etiqueta */}
           {product.etiqueta && (
@@ -100,11 +100,11 @@ export default function ProductCard({ product, showAddButton = false }: { produc
           </div>
 
           {/* 📝 Info */}
-          <div className="mt-2.5 sm:mt-3">
+          <div className="mt-2.5 sm:mt-3 flex flex-col grow">
             <h3 className="text-[13px] sm:text-sm font-semibold text-zinc-900 dark:text-white line-clamp-1">
               {product.nombre}
             </h3>
-            <p className="text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-3 min-h-[28px] sm:min-h-0">
+            <p className="text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 sm:line-clamp-3 min-h-[34px] sm:min-h-[48px]">
               {product.descripcion || "Sin descripción"}...
             </p>
             <p className="mt-1 text-sm font-bold text-orange-500 dark:text-orange-400">
@@ -121,7 +121,7 @@ export default function ProductCard({ product, showAddButton = false }: { produc
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl h-9 px-3 text-sm font-medium transition bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[.99]"
+                className="mt-auto pt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl h-9 px-3 text-sm font-medium transition bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[.99]"
               >
                 <ShoppingCart className="h-4 w-4" /> Agregar
               </button>

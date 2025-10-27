@@ -26,7 +26,7 @@ export default function CartModal() {
       .reduce((acc, p) => acc + p.precio * p.cantidad, 0)
       .toLocaleString("es-MX")} MXN\n` +
     `--------------------------\n\n` +
-    `🚚 *Método de entrega:* A convenir con el vendedor\n` +
+    `🚚 *Entrega:* Recoleccion en tienda (coordinamos dia y hora)\n` +
     `📞 *Atención personalizada vía WhatsApp*\n\n` +
     `🧾 *Catálogo completo:* https://weldzone.vercel.app/catalogo\n\n` +
     `📲 *Por favor envíame tu nombre y dirección para confirmar tu pedido.*\n\n` +
@@ -168,3 +168,6 @@ export default function CartModal() {
     </div>
   );
 }
+
+
+
