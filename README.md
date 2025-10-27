@@ -27,7 +27,7 @@ Nota de negocio: actualmente no realizamos envíos. La entrega es por recolecci�
 - `/como-comprar` Guía paso a paso para cotizar/comprar
 - `/contacto` Ubicación, contacto y horarios
 - `/nosotros` Información de la empresa
-- `/admin` Panel (rutas protegidas) — incluye `/admin/products` y `/admin/config`
+- `/admin` Panel (rutas protegidas)
 
 ---
 
@@ -117,4 +117,3 @@ Ajusta `VITE_API_URL` para apuntar al backend correspondiente.
 
 Proyecto de uso interno para WeldZone.  
 © 2025 Todos los derechos reservados.
-
