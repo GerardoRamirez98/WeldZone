@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
@@ -8,28 +8,9 @@ import type { Product } from "@/types/products";
 import CartFloatingButton from "../components/CartFloatingButton";
 import SidebarCategorias from "../components/SidebarCategorias";
 import { useCategorias } from "@/hooks/useCategories";
-import { exportProductsPdf } from "@/utils/pdf";
-import { toast } from "sonner";
+import { exportProductsPdf } from "@/utils/pdf";\nimport { toast } from "sonner";\nimport { useConfig } from "@/hooks/useConfig";
 
-export default function Catalogo() {
-  // Aviso para el cliente al entrar al catálogo
-  useEffect(() => {
-    try {
-      // Evitar mostrar varias veces si se re-monta rápidamente
-      const key = "catalogo_whatsapp_notice_shown";
-      const shown = sessionStorage.getItem(key);
-      if (!shown) {
-        toast.info(
-          "Si no encuentras en este catálogo algún producto, por favor pónganse en contacto con nosotros por medio de WhatsApp.",
-          { duration: 8000 }
-        );
-        sessionStorage.setItem(key, "1");
-      }
-    } catch {
-      // noop
-    }
-  }, []);
-  const [searchParams, setSearchParams] = useSearchParams();
+export default function Catalogo() {\n  const { config } = useConfig();\n  const [noticeDismissed, setNoticeDismissed] = useState<boolean>(() => {\n    try { return localStorage.getItem("catalogo_whatsapp_notice_dismissed") === "1"; } catch { return false; }\n  });\n  const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const catParam = searchParams.get("cat");
   const minParam = searchParams.get("min");
@@ -146,8 +127,39 @@ export default function Catalogo() {
         }}
       />
 
-      <div className="flex-1">
-        {/* Barra de acciones móvil: buscador + descargar PDF */}
+              {/* Aviso destacado: soporte por WhatsApp */}
+        {!noticeDismissed && (
+          <div className="mb-4 rounded-xl border border-yellow-400 bg-yellow-50 text-zinc-900 dark:bg-yellow-500/10 dark:border-yellow-600 p-3 sm:p-4 flex items-start gap-3">
+            <div className="rounded-lg bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 p-1.5 mt-0.5">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="text-sm flex-1">
+              <p className="text-zinc-800 dark:text-zinc-100">
+                Si no encuentras en este catálogo algún producto, por favor ponte en contacto con nosotros por medio de WhatsApp.
+              </p>
+              <div className="mt-2">
+                <a
+                  href={(config?.whatsapp ? `https://wa.me/${(config.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent('Hola, me podrían apoyar con un producto del catálogo?')}` : 'https://wa.me/')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
+                >
+                  Contactar por WhatsApp
+                </a>
+              </div>
+            </div>
+            <button
+              aria-label="Cerrar aviso"
+              onClick={() => {
+                setNoticeDismissed(true);
+                try { localStorage.setItem("catalogo_whatsapp_notice_dismissed", "1"); } catch {}
+              }}
+              className="ml-2 px-2 py-1 text-xs rounded-md text-zinc-700 hover:bg-zinc-200 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              Cerrar
+            </button>
+          </div>
+        )}{/* Barra de acciones móvil: buscador + descargar PDF */}
         <div className="sm:hidden mb-4 flex items-center gap-2">
           <input
             aria-label="Buscar productos"
@@ -230,3 +242,6 @@ export default function Catalogo() {
     </main>
   );
 }
+
+
+
