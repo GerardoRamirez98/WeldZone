@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CircleHelp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,23 @@ import { exportProductsPdf } from "@/utils/pdf";
 import { toast } from "sonner";
 
 export default function Catalogo() {
+  // Aviso para el cliente al entrar al catálogo
+  useEffect(() => {
+    try {
+      // Evitar mostrar varias veces si se re-monta rápidamente
+      const key = "catalogo_whatsapp_notice_shown";
+      const shown = sessionStorage.getItem(key);
+      if (!shown) {
+        toast.info(
+          "Si no encuentras en este catálogo algún producto, por favor pónganse en contacto con nosotros por medio de WhatsApp.",
+          { duration: 8000 }
+        );
+        sessionStorage.setItem(key, "1");
+      }
+    } catch {
+      // noop
+    }
+  }, []);
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const catParam = searchParams.get("cat");
