@@ -138,6 +138,7 @@ export default function Catalogo() {
         }}
       />
 
+      <div className="flex-1">
               {/* Aviso destacado: soporte por WhatsApp */}
         {!noticeDismissed && (
           <div className="mb-4 rounded-xl border border-yellow-400 bg-yellow-50 text-zinc-900 dark:bg-yellow-500/10 dark:border-yellow-600 p-3 sm:p-4 flex items-start gap-3">
