@@ -8,9 +8,11 @@ import type { Product } from "@/types/products";
 import CartFloatingButton from "../components/CartFloatingButton";
 import SidebarCategorias from "../components/SidebarCategorias";
 import { useCategorias } from "@/hooks/useCategories";
-import { exportProductsPdf } from "@/utils/pdf";\nimport { toast } from "sonner";\nimport { useConfig } from "@/hooks/useConfig";
+import { exportProductsPdf } from "@/utils/pdf";
+import { toast } from "sonner";
+import { useConfig } from "@/hooks/useConfig";
 
-export default function Catalogo() {\n  const { config } = useConfig();\n  const [noticeDismissed, setNoticeDismissed] = useState<boolean>(() => {\n    try { return localStorage.getItem("catalogo_whatsapp_notice_dismissed") === "1"; } catch { return false; }\n  });\n  const [searchParams, setSearchParams] = useSearchParams();
+export default function Catalogo() {`n  const { config } = useConfig();`n  const [noticeDismissed, setNoticeDismissed] = useState<boolean>(() => {`n    try { return localStorage.getItem("catalogo_whatsapp_notice_dismissed") === "1"; } catch { return false; }`n  });`n  const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const catParam = searchParams.get("cat");
   const minParam = searchParams.get("min");
@@ -242,6 +244,8 @@ export default function Catalogo() {\n  const { config } = useConfig();\n  const
     </main>
   );
 }
+
+
 
 
 
