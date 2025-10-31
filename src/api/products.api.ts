@@ -44,6 +44,30 @@ export function useProductsApi() {
     });
   };
 
+  // Reactivar un producto inactivo
+  const restoreProduct = async (id: number): Promise<void> => {
+    await request(`${API_URL}/products/${id}/restore`, {
+      method: "PATCH",
+    });
+  };
+
+  // Eliminación definitiva de un producto, requiere contraseña
+  const forceDeleteProduct = async (
+    id: number,
+    password: string
+  ): Promise<void> => {
+    await request(`${API_URL}/products/${id}/force`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+  };
+
+  // Obtener productos incluyendo inactivos (usar para vista "Eliminados")
+  const getProductsIncludeInactive = async (): Promise<Product[]> => {
+    return await request(`${API_URL}/products?includeInactive=true`);
+  };
+
   // 🖼️ Subir imagen (opcional)
   const uploadProductImage = async (file: File, productId: number) => {
     const formData = new FormData();
@@ -59,9 +83,12 @@ export function useProductsApi() {
 
   return {
     getProducts,
+    getProductsIncludeInactive,
     createProduct,
     updateProduct,
     deleteProduct,
+    restoreProduct,
+    forceDeleteProduct,
     uploadProductImage, // opcional
   };
 }

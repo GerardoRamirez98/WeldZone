@@ -30,6 +30,32 @@ export function useProducts() {
 }
 
 /**
+ * Hook para productos inactivos (eliminados lógicamente)
+ */
+export function useInactiveProducts() {
+  const { getProductsIncludeInactive } = useProductsApi();
+  const {
+    data: products = [],
+    isLoading: loading,
+    isFetching,
+    error,
+  } = useQuery<Product[]>({
+    queryKey: ["products-inactive"],
+    queryFn: getProductsIncludeInactive,
+    staleTime: 0, // siempre considerado stale para refetch inmediato
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always", // al entrar a la vista, fuerza refetch
+    select: (all) => all.filter((p) => p.estado === "inactivo" || p.activo === false),
+  });
+
+  return {
+    products,
+    loading: loading || isFetching,
+    error,
+  };
+}
+
+/**
  * Hook para crear productos
  */
 export function useCreateProduct() {
@@ -71,6 +97,38 @@ export function useDeleteProduct() {
     mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-inactive"] });
+    },
+  });
+}
+
+/**
+ * Hook para restaurar productos (reactivar)
+ */
+export function useRestoreProduct() {
+  const { restoreProduct } = useProductsApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => restoreProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-inactive"] });
+    },
+  });
+}
+
+/**
+ * Hook para eliminación definitiva
+ */
+export function useForceDeleteProduct() {
+  const { forceDeleteProduct } = useProductsApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, password }: { id: number; password: string }) =>
+      forceDeleteProduct(id, password),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-inactive"] });
     },
   });
 }

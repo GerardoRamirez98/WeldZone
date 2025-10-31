@@ -3,7 +3,7 @@ import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import type { NewProduct } from "../../types/products";
 import { toast } from "sonner";
-import { useCreateProduct } from "../../hooks/useProducts";
+import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
 import { get } from "../../api/base";
 import { useApi } from "../../hooks/useApi"; // 👈 para subir archivos con control global
 
@@ -44,6 +44,7 @@ export default function AddProductModal({
 
   const { request } = useApi(); // 🔥 Subidas con control global
   const { mutateAsync: createProduct } = useCreateProduct(); // React Query hook
+  const { mutateAsync: updateProduct } = useUpdateProduct();
 
   // 🧹 Reset form
   const resetForm = useCallback(() => {
@@ -119,6 +120,17 @@ export default function AddProductModal({
     const toastId = toast.loading("Guardando producto...");
 
     try {
+      // 0) Validación: nombre duplicado sin subir archivos
+      try {
+        const validate = await request(`${API_URL}/products/exists?nombre=${encodeURIComponent(nombre)}`);
+        if (validate?.exists) {
+          const loc = validate.in === 'eliminados' ? 'eliminados' : 'productos';
+          toast.warning(`Ya existe un producto con ese nombre en la lista de ${loc}.`, { id: toastId });
+          setIsSubmitting(false);
+          setShowSaveConfirm(false);
+          return;
+        }
+      } catch {}
       let imagenUrl: string | undefined;
       let specFileUrl: string | undefined;
 
@@ -184,7 +196,7 @@ export default function AddProductModal({
       >
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-lg relative z-10 border border-zinc-200 dark:border-zinc-700">
-          <Dialog.Title className="text-lg font-bold text-center mb-4 pb-2 border-b border-zinc-200 dark:border-zinc-700">
+          <Dialog.Title className="text-lg font-bold text-center mb-4 pb-2 text-zinc-900 dark:text-zinc-100 border-b border-zinc-200 dark:border-zinc-700">
             Agregar producto
           </Dialog.Title>
 
@@ -442,4 +454,8 @@ export default function AddProductModal({
     </>
   );
 }
+
+
+
+
 

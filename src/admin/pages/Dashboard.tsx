@@ -19,7 +19,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await get<Producto[]>(`/products`);
+        const data = await get<Producto[]>(`/products?includeInactive=true`);
         setProducts(data);
       } catch (err) {
         console.error("❌ Error al cargar productos:", err);
@@ -35,6 +35,7 @@ export default function Dashboard() {
   const descontinuados = products.filter(
     (p) => p.estado === "descontinuado"
   ).length;
+  const inactivos = products.filter((p) => p.estado === "inactivo" || (p as any).activo === false).length;
   // 🧮 Agrupar por categoría
   const categorias = products.reduce((acc: Record<string, number>, p) => {
     const cat =
@@ -68,7 +69,7 @@ export default function Dashboard() {
       ) : (
         <>
           {/* Tarjetas de métricas */}
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
             <MetricCard
               icon={<Package className="w-8 h-8 text-yellow-500" />}
               label="Total de productos"
@@ -83,6 +84,11 @@ export default function Dashboard() {
               icon={<TrendingDown className="w-8 h-8 text-red-500" />}
               label="Descontinuados"
               value={descontinuados}
+            />
+            <MetricCard
+              icon={<AlertTriangle className="w-8 h-8 text-red-500" />}
+              label="Inactivos"
+              value={inactivos}
             />
           </div>
           {/* Gráfica */}

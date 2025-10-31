@@ -48,31 +48,42 @@ export function useApi() {
         }
       }
 
-      // Si el servidor responde con un error, lo manejamos
+            // Si el servidor responde con un error, lo manejamos
       if (!response.ok) {
+        let serverMessage = "";
+        try {
+          const ct = response.headers.get("Content-Type") || "";
+          if (ct.includes("application/json")) {
+            const body = await response.clone().json();
+            serverMessage =
+              (typeof body?.message === "string" && body.message) ||
+              (Array.isArray(body?.message) ? body.message.join("\n") : "");
+          } else {
+            serverMessage = await response.clone().text();
+          }
+        } catch {}
+
         switch (response.status) {
           case 401:
             toast.warning("Tu sesión ha expirado. Inicia sesión nuevamente.");
             navigate("/login");
             break;
-
           case 403:
             toast.error("No tienes permiso para acceder a esta sección.");
             navigate("/acceso-denegado");
             break;
-
+          case 409:
+          case 400:
+            toast.warning(serverMessage || "Solicitud inválida.");
+            break;
           case 500:
             console.error("🔥 Error interno del servidor");
             navigate("/error-500");
             break;
-
           default:
-            toast.error(
-              `Ocurrió un error (${response.status}). Intenta de nuevo.`
-            );
+            toast.error(serverMessage || `Ocurrió un error (${response.status}). Intenta de nuevo.`);
         }
-
-        throw new Error(`HTTP error ${response.status}`);
+        throw new Error(serverMessage || `HTTP error ${response.status}`);
       }
 
       // Si la respuesta tiene contenido, la parseamos
@@ -117,3 +128,4 @@ async function tryRefresh(): Promise<boolean> {
   }
   return true;
 }
+

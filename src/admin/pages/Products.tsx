@@ -14,10 +14,10 @@ export default function Products() {
   const { products, loading, error } = useProducts();
   const { mutate: deleteProduct } = useDeleteProduct();
 
-  // Estados locales (solo UI)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [productoEdit, setProductoEdit] = useState<Product | null>(null);
   const [productoDelete, setProductoDelete] = useState<Product | null>(null);
+
   const { data: categorias = [] } = useCategorias();
   const [categoriaId, setCategoriaId] = useState<number | "all">("all");
 
@@ -28,15 +28,15 @@ export default function Products() {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-96 text-zinc-400">
+      <div className="flex justify-center items-center h-96 text-zinc-400 dark:text-zinc-500">
         Cargando productos...
       </div>
     );
 
   if (error)
     return (
-      <div className="flex flex-col justify-center items-center h-96 text-red-400">
-        <p>❗ Error al cargar productos.</p>
+      <div className="flex flex-col justify-center items-center h-96 text-red-400 dark:text-red-300">
+        <p>Error al cargar productos.</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-3 bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-400"
@@ -50,7 +50,7 @@ export default function Products() {
     <div>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Productos</h2>
+        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">Gestión de Productos</h2>
         <button
           className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition font-medium"
           onClick={() => setIsAddModalOpen(true)}
@@ -89,7 +89,9 @@ export default function Products() {
                   ? undefined
                   : categorias.find((c) => c.id === categoriaId)?.nombre;
               const id = toast.loading("Generando PDF...");
-              const isMobile = typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+              const isMobile =
+                typeof navigator !== "undefined" &&
+                /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
               const many = filteredForPdf.length > 80;
               await exportProductsPdf(filteredForPdf, {
                 title: "Listado de Productos",
@@ -110,7 +112,7 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Grid sin virtualización para evitar recortes en acciones */}
+      {/* Grid de productos activos */}
       <Tooltip.Provider delayDuration={150}>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((prod) => (
@@ -140,7 +142,7 @@ export default function Products() {
         />
       )}
 
-      {/* Confirmación Eliminar */}
+      {/* Confirmación: Desactivar producto */}
       <Dialog
         open={!!productoDelete}
         onClose={() => setProductoDelete(null)}
@@ -149,10 +151,10 @@ export default function Products() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-xl w-full max-w-sm relative z-10 border border-zinc-200 dark:border-zinc-700">
           <Dialog.Title className="text-lg font-bold text-center mb-4 text-zinc-800 dark:text-zinc-100">
-            ¿Eliminar producto?
+            ¿Desactivar producto?
           </Dialog.Title>
           <p className="text-center text-sm text-zinc-600 dark:text-zinc-300 mb-6">
-            Esta acción no se puede deshacer.
+            Podrás reactivarlo desde la vista "Productos eliminados".
           </p>
           <div className="flex justify-center gap-3">
             <button
@@ -167,16 +169,16 @@ export default function Products() {
                 if (!productoDelete?.id) return;
                 deleteProduct(productoDelete.id, {
                   onSuccess: () => {
-                    toast.success("✅ Producto eliminado correctamente");
+                    toast.success("Producto desactivado");
                     setProductoDelete(null);
                   },
                   onError: () => {
-                    toast.error("No se pudo eliminar el producto");
+                    toast.error("No se pudo desactivar el producto");
                   },
                 });
               }}
             >
-              Sí, eliminar
+              Sí, desactivar
             </button>
           </div>
         </div>
@@ -184,3 +186,6 @@ export default function Products() {
     </div>
   );
 }
+
+
+

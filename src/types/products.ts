@@ -23,6 +23,8 @@ export interface Product {
   imagenUrl?: string;
   specFileUrl?: string | null;
   estado?: string;
+  activo?: boolean;
+  deletedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

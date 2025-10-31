@@ -7,9 +7,12 @@ type Props = {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  mode?: 'active' | 'inactive';
+  onRestore?: (product: Product) => void;
+  onForceDelete?: (product: Product) => void;
 };
 
-function Card({ product: p, onEdit, onDelete }: Props) {
+function Card({ product: p, onEdit, onDelete, mode = 'active', onRestore, onForceDelete }: Props) {
   return (
     <div
       className="group relative rounded-2xl border bg-white p-3 shadow-sm transition 
@@ -89,6 +92,11 @@ function Card({ product: p, onEdit, onDelete }: Props) {
         <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 min-h-[32px]">
           {p.descripcion || "Sin descripción"}
         </p>
+        {mode === 'inactive' && (
+          <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+            Eliminado: {p.deletedAt ? new Date(p.deletedAt as any).toLocaleString() : '—'}
+          </p>
+        )}
         <div className="mt-2 flex justify-between items-center">
           <span className="text-sm font-bold text-orange-500 dark:text-orange-400">
             ${p.precio.toLocaleString("es-MX")}
@@ -96,18 +104,37 @@ function Card({ product: p, onEdit, onDelete }: Props) {
         </div>
 
         <div className="mt-3 flex gap-2">
-          <button
-            className="w-full rounded-md bg-yellow-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-600 transition"
-            onClick={() => onEdit(p)}
-          >
-            Editar
-          </button>
-          <button
-            className="w-full rounded-md bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600 transition"
-            onClick={() => onDelete(p)}
-          >
-            Eliminar
-          </button>
+          {mode === 'active' ? (
+            <>
+              <button
+                className="w-full rounded-md bg-yellow-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-600 transition"
+                onClick={() => onEdit(p)}
+              >
+                Editar
+              </button>
+              <button
+                className="w-full rounded-md bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600 transition"
+                onClick={() => onDelete(p)}
+              >
+                Eliminar
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 transition"
+                onClick={() => onRestore?.(p)}
+              >
+                Reactivar
+              </button>
+              <button
+                className="w-full rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 transition"
+                onClick={() => onForceDelete?.(p)}
+              >
+                Eliminar definitivamente
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

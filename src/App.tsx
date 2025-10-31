@@ -13,6 +13,7 @@ const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 const Dashboard = lazy(() => import("./admin/pages/Dashboard"));
 const Products = lazy(() => import("./admin/pages/Products"));
 const AdminConfig = lazy(() => import("./admin/pages/AdminConfig"));
+const ProductsDeleted = lazy(() => import("./admin/pages/ProductsDeleted"));
 
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
@@ -172,6 +173,14 @@ export default function App() {
                   element={
                     <Suspense fallback={<div className="p-6">Cargando...</div>}>
                       <Products />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="products/eliminados"
+                  element={
+                    <Suspense fallback={<div className="p-6">Cargando...</div>}>
+                      <ProductsDeleted />
                     </Suspense>
                   }
                 />
