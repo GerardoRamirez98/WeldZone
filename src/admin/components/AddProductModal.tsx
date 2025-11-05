@@ -3,7 +3,7 @@ import { Dialog } from "@headlessui/react";
 import { Camera, Upload, Trash2, Eye, FilePlus2 } from "lucide-react";
 import type { NewProduct } from "../../types/products";
 import { toast } from "sonner";
-import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
+import { useCreateProduct } from "../../hooks/useProducts";
 import { get } from "../../api/base";
 import { useApi } from "../../hooks/useApi"; // 👈 para subir archivos con control global
 
@@ -44,7 +44,6 @@ export default function AddProductModal({
 
   const { request } = useApi(); // 🔥 Subidas con control global
   const { mutateAsync: createProduct } = useCreateProduct(); // React Query hook
-  const { mutateAsync: updateProduct } = useUpdateProduct();
 
   // 🧹 Reset form
   const resetForm = useCallback(() => {

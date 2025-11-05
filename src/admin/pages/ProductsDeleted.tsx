@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { Dialog } from "@headlessui/react";
 import type { Product } from "@/types/products";
 import { useInactiveProducts, useRestoreProduct, useForceDeleteProduct } from "@/hooks/useProducts";
 import { toast } from "sonner";
