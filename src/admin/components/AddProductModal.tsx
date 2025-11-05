@@ -129,7 +129,9 @@ export default function AddProductModal({
           setShowSaveConfirm(false);
           return;
         }
-      } catch {}
+      } catch (e) {
+        console.debug("Validación de nombre fallida (ignorado)", e);
+      }
       let imagenUrl: string | undefined;
       let specFileUrl: string | undefined;
 

@@ -94,7 +94,7 @@ function Card({ product: p, onEdit, onDelete, mode = 'active', onRestore, onForc
         </p>
         {mode === 'inactive' && (
           <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-            Eliminado: {p.deletedAt ? new Date(p.deletedAt as any).toLocaleString() : '—'}
+            Eliminado: {p.deletedAt ? new Date(p.deletedAt).toLocaleString() : '-'}
           </p>
         )}
         <div className="mt-2 flex justify-between items-center">

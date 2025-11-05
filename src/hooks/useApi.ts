@@ -64,7 +64,9 @@ export function useApi() {
           } else {
             serverMessage = await response.clone().text();
           }
-        } catch {}
+        } catch (e) {
+          console.debug("No se pudo parsear cuerpo de error", e);
+        }
 
         switch (response.status) {
           case 401:

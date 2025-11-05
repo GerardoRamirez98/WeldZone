@@ -70,7 +70,7 @@ export default function Catalogo() {
     const map = new Map<number, { id: number; nombre: string; count: number }>();
     const base = categoriaSeleccionada === null ? products : products.filter((p) => p.categoriaId === categoriaSeleccionada);
     for (const p of base) {
-      const e = p.etiqueta ?? (p.etiquetaId ? { id: p.etiquetaId, nombre: "Etiqueta", color: "#999" } as any : null);
+      const e = p.etiqueta ?? (p.etiquetaId ? { id: p.etiquetaId, nombre: "Etiqueta", color: "#999" } : null);
       if (!e || !e.id) continue;
       const current = map.get(e.id) ?? { id: e.id, nombre: e.nombre, count: 0 };
       current.count += 1;
@@ -164,7 +164,7 @@ export default function Catalogo() {
               aria-label="Cerrar aviso"
               onClick={() => {
                 setNoticeDismissed(true);
-                try { localStorage.setItem("catalogo_whatsapp_notice_dismissed", "1"); } catch {}
+                try { localStorage.setItem("catalogo_whatsapp_notice_dismissed", "1"); } catch (e) { console.debug("No se pudo guardar preferencia", e); }
               }}
               className="ml-2 px-2 py-1 text-xs rounded-md text-zinc-700 hover:bg-zinc-200 dark:text-zinc-200 dark:hover:bg-zinc-800"
             >

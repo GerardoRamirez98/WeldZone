@@ -35,7 +35,7 @@ export default function Dashboard() {
   const descontinuados = products.filter(
     (p) => p.estado === "descontinuado"
   ).length;
-  const inactivos = products.filter((p) => p.estado === "inactivo" || (p as any).activo === false).length;
+  const inactivos = products.filter((p) => p.estado === "inactivo" || p.activo === false).length;
   // 🧮 Agrupar por categoría
   const categorias = products.reduce((acc: Record<string, number>, p) => {
     const cat =
