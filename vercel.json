@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://weldzone-backend-production.up.railway.app/$1" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [

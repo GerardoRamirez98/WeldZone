@@ -41,6 +41,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173, // Puerto del servidor
       open: true, // Abrir el navegador automáticamente
+      proxy: env.VITE_API_URL === "/api" ? {
+        "/api": {
+          target: "http://localhost:3000",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (p) => p.replace(/^\/api/, ""),
+        },
+      } : undefined,
     },
   };
 });
