@@ -33,7 +33,10 @@ export function useApi() {
           (headersInit as Record<string, string>)["Content-Type"] = "application/json";
         }
 
-        return fetch(url.startsWith("http") ? url : `${API_URL}${url}`, {
+        const isAbsolute = /^https?:\/\//i.test(url);
+        const isAlreadyApi = url.startsWith(API_URL) || url.startsWith("/api/");
+        const finalUrl = isAbsolute ? url : isAlreadyApi ? url : `${API_URL}${url}`;
+        return fetch(finalUrl, {
           credentials: "include",
           ...options,
           headers: headersInit,
