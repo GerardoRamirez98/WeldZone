@@ -10,6 +10,7 @@ type Producto = {
   precio: number;
   categoria?: { nombre: string } | string | null;
   estado?: string;
+  activo?: boolean | null;
 };
 // API helpers importados desde @/api/base
 export default function Dashboard() {
