@@ -21,9 +21,11 @@ export default function Products() {
   const { data: categorias = [] } = useCategorias();
   const [categoriaId, setCategoriaId] = useState<number | "all">("all");
 
-  const filteredForPdf = useMemo(() => {
+  const filtered = useMemo(() => {
     if (categoriaId === "all") return products;
-    return products.filter((p) => p.categoria?.id === categoriaId);
+    return products.filter(
+      (p) => p.categoria?.id === categoriaId || p.categoriaId === categoriaId
+    );
   }, [products, categoriaId]);
 
   if (loading)
@@ -92,8 +94,8 @@ export default function Products() {
               const isMobile =
                 typeof navigator !== "undefined" &&
                 /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-              const many = filteredForPdf.length > 80;
-              await exportProductsPdf(filteredForPdf, {
+              const many = filtered.length > 80;
+              await exportProductsPdf(filtered, {
                 title: "Listado de Productos",
                 categoryName: catName,
                 includeImages: !(isMobile || many),
@@ -114,8 +116,8 @@ export default function Products() {
 
       {/* Grid de productos activos */}
       <Tooltip.Provider delayDuration={150}>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((prod) => (
+        <div className="grid grid-cols-2 gap-6 lg:auto-grid">
+          {filtered.map((prod) => (
             <div key={prod.id}>
               <ProductCardAdmin
                 product={prod}

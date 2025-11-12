@@ -226,7 +226,7 @@ export default function Catalogo() {
                 transition: { duration: 0.4, staggerChildren: 0.06 },
               },
             }}
-            className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            className="grid grid-cols-2 gap-3 sm:gap-4 lg:auto-grid"
           >
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
