@@ -99,7 +99,7 @@ export default function ProductsDeleted() {
         ) : filtered.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin coincidencias con el filtro.</p>
         ) : (
-          <div className="grid gap-6 auto-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:auto-grid">
             {filtered.map((prod) => (
               <div key={prod.id}>
                 <ProductCardAdmin
