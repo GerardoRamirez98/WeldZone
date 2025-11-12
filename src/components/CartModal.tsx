@@ -1,14 +1,48 @@
 import { Trash2, X, Plus, Minus } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import type { CartItem } from "../context/CartContext";
 import { useConfig } from "../hooks/useConfig";
 import * as Dialog from "@radix-ui/react-dialog";
 import { toast } from "sonner";
+import { useState } from "react";
+import { exportOrderReceiptPdf } from "@/utils/pdf";
+
+function buildOrderMessage(cart: CartItem[], name: string, reference: string) {
+  const total = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const now = new Date();
+  const fecha = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(now);
+  const header =
+    `*Nuevo pedido desde WeldZone*\n` +
+    `Folio: ${reference}\n` +
+    `Fecha: ${fecha}\n` +
+    `Cliente: ${name?.trim() || "Cliente"}\n\n`;
+  const lines = cart
+    .map(
+      (p, i) =>
+        `${i + 1}. ${p.nombre.toUpperCase()}\n` +
+        `   Precio: $${p.precio.toLocaleString("es-MX")} MXN\n` +
+        `   Cantidad: ${p.cantidad}\n` +
+        `   Subtotal: $${(p.precio * p.cantidad).toLocaleString("es-MX")} MXN`
+    )
+    .join("\n\n");
+  const footer =
+    `\n\n--------------------------\n` +
+    `Total a pagar: $${total.toLocaleString("es-MX")} MXN\n` +
+    `--------------------------\n\n` +
+    `Entrega: Recolección en tienda (coordinamos día y hora)\n` +
+    `Atención personalizada vía WhatsApp\n\n` +
+    `Catálogo completo: https://weldzone.vercel.app/catalogo\n\n` +
+    `Por favor envíame tu dirección para confirmar tu pedido.\n\n` +
+    `_Mensaje automático generado desde WeldZone_`;
+  return header + lines + footer;
+}
 
 export default function CartModal() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const { config } = useConfig(); // 👈 obtenemos la configuración desde backend
 
   const whatsappNumber = config?.whatsapp?.trim();
+  const [customerName] = useState("");
 
   const mensaje =
     `🛒 *¡Nuevo pedido desde WeldZone!*\n\n` +
@@ -32,7 +66,7 @@ export default function CartModal() {
     `📲 *Por favor envíame tu nombre y dirección para confirmar tu pedido.*\n\n` +
     `🔧 _Mensaje automático generado desde WeldZone_`;
 
-  const handleSend = () => {
+  const handleSendLegacy = () => {
     if (cart.length === 0) {
       toast.warning("Tu carrito está vacío.");
       return;
@@ -49,6 +83,53 @@ export default function CartModal() {
       )}`,
       "_blank"
     );
+
+    clearCart();
+  };
+  // marcar como usado (legacy)
+  void handleSendLegacy;
+
+  // Nuevo flujo: genera folio y comprobante PDF, e incluye el folio en el mensaje
+  const handleSend = async () => {
+    if (cart.length === 0) {
+      toast.warning("Tu carrito esta vacio.");
+      return;
+    }
+    if (!whatsappNumber) {
+      toast.error("No hay numero de WhatsApp configurado.");
+      return;
+    }
+
+    const snapshot = cart.map((p) => ({ nombre: p.nombre, precio: p.precio, cantidad: p.cantidad })) as CartItem[];
+    const name = (customerName || (typeof window !== "undefined" ? window.prompt("Ingresa tu nombre para el comprobante (opcional)", "") || "" : "")).trim();
+    const reference = (() => {
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const ymd = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+      const rnd = Math.random().toString(36).slice(2, 6).toUpperCase();
+      return `WZ-${ymd}-${rnd}`;
+    })();
+
+    const mensaje = buildOrderMessage(snapshot, name, reference);
+
+    // Abrimos WhatsApp primero para evitar bloqueos de popup
+    window.open(
+      `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(mensaje)}`,
+      "_blank"
+    );
+
+    try {
+      const id = toast.loading("Generando comprobante en PDF...");
+      await exportOrderReceiptPdf(snapshot, {
+        reference,
+        customerName: name || "Cliente",
+        date: new Date(),
+      });
+      toast.success("Comprobante descargado", { id });
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el comprobante PDF");
+    }
 
     clearCart();
   };

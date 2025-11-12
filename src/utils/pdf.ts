@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import type { TextOptionsLight } from "jspdf";
 import type { Product } from "@/types/products";
+import type { CartItem } from "@/context/CartContext";
 import logoLight from "@/assets/logo-light-trazo.png";
 
 const IS_DEV: boolean =
@@ -400,4 +401,142 @@ export async function exportProductsPdf(
   doc.setTextColor(0);
 
   doc.save("Lista_Precios_WeldZone.pdf");
+}
+
+// ------------------------------------------------------------
+// Comprobante / Ticket de pedido
+// ------------------------------------------------------------
+type ReceiptOptions = {
+  reference: string; // folio/código de pedido
+  customerName?: string;
+  date?: Date;
+};
+
+export async function exportOrderReceiptPdf(
+  items: Array<Pick<CartItem, "nombre" | "precio" | "cantidad">>,
+  { reference, customerName = "Cliente", date = new Date() }: ReceiptOptions
+) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const margin = 14;
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  const asMoney = (n: number) => {
+    try {
+      return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+    } catch {
+      return `$${n.toFixed(2)}`;
+    }
+  };
+
+  const total = items.reduce((acc, it) => acc + it.precio * it.cantidad, 0);
+
+  // Encabezado
+  doc.setFillColor(247, 181, 0);
+  doc.rect(0, 0, pageW, 22, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(20);
+  doc.setFontSize(14);
+  doc.text("WeldZone — Comprobante de Pedido", margin, 12);
+  doc.setFontSize(10);
+  doc.text(`Folio: ${reference}`, pageW - margin - doc.getTextWidth(`Folio: ${reference}`), 8);
+  const dateStr = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  doc.text(`Fecha: ${dateStr}`, pageW - margin - doc.getTextWidth(`Fecha: ${dateStr}`), 14);
+
+  // Datos del cliente
+  let y = 30;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(30);
+  doc.setFontSize(12);
+  doc.text("Datos del cliente", margin, y);
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(`Nombre: ${customerName || "Cliente"}`, margin, y);
+  y += 10;
+
+  // Tabla de productos
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Detalle del pedido", margin, y);
+  y += 6;
+
+  // Cabecera de tabla
+  const colQtyW = 14;
+  const colPriceW = 26;
+  const colSubW = 30;
+  const colNameW = pageW - margin * 2 - colQtyW - colPriceW - colSubW - 2;
+  const xQty = margin;
+  const xName = xQty + colQtyW + 2;
+  const xPrice = xName + colNameW + 2;
+  const xSub = xPrice + colPriceW + 2;
+
+  doc.setFontSize(10);
+  doc.setDrawColor(210);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margin, y - 4, pageW - margin * 2, 8, "S");
+  doc.text("Cant.", xQty + 1, y + 1);
+  doc.text("Producto", xName + 1, y + 1);
+  doc.text("Precio", xPrice + 1, y + 1);
+  doc.text("Subtotal", xSub + 1, y + 1);
+  y += 8;
+
+  doc.setFont("helvetica", "normal");
+  for (const it of items) {
+    const lines = doc.splitTextToSize(it.nombre || "Producto", colNameW - 2);
+    const rowH = Math.max(6, lines.length * 5 + 2);
+    if (y + rowH + 20 > pageH - margin) {
+      doc.addPage();
+      y = margin;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("Detalle del pedido (cont.)", margin, y);
+      y += 6;
+      doc.setFont("helvetica", "normal");
+    }
+
+    // Cantidad
+    doc.text(String(it.cantidad), xQty + 1, y + 5);
+    // Nombre
+    doc.text(lines as unknown as string, xName + 1, y + 5);
+    // Precio
+    const priceStr = asMoney(it.precio);
+    const priceW = doc.getTextWidth(priceStr);
+    doc.text(priceStr, xPrice + colPriceW - priceW - 2, y + 5);
+    // Subtotal
+    const subStr = asMoney(it.precio * it.cantidad);
+    const subW = doc.getTextWidth(subStr);
+    doc.text(subStr, xSub + colSubW - subW - 2, y + 5);
+
+    // Row divider
+    doc.setDrawColor(235);
+    doc.line(margin, y + rowH, pageW - margin, y + rowH);
+    y += rowH + 2;
+  }
+
+  // Total
+  if (y + 20 > pageH - margin) {
+    doc.addPage();
+    y = margin;
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Total", xPrice, y + 6);
+  doc.setTextColor(247, 181, 0);
+  const totStr = asMoney(total);
+  const totW = doc.getTextWidth(totStr);
+  doc.text(totStr, xSub + colSubW - totW - 2, y + 6);
+  doc.setTextColor(0);
+  y += 14;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text(
+    "Comprobante informativo. No es factura. Para facturación, solicita tus datos por WhatsApp.",
+    margin,
+    pageH - margin
+  );
+
+  doc.save(`Comprobante_${reference}.pdf`);
 }
