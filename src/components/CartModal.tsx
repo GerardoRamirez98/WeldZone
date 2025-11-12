@@ -43,6 +43,8 @@ export default function CartModal() {
 
   const whatsappNumber = config?.whatsapp?.trim();
   const [customerName] = useState("");
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [tempName, setTempName] = useState("");
 
   const mensaje =
     `🛒 *¡Nuevo pedido desde WeldZone!*\n\n` +
@@ -90,7 +92,7 @@ export default function CartModal() {
   void handleSendLegacy;
 
   // Nuevo flujo: genera folio y comprobante PDF, e incluye el folio en el mensaje
-  const handleSend = async () => {
+  const handleSend = async (providedName?: string) => {
     if (cart.length === 0) {
       toast.warning("Tu carrito esta vacio.");
       return;
@@ -101,7 +103,7 @@ export default function CartModal() {
     }
 
     const snapshot = cart.map((p) => ({ nombre: p.nombre, precio: p.precio, cantidad: p.cantidad })) as CartItem[];
-    const name = (customerName || (typeof window !== "undefined" ? window.prompt("Ingresa tu nombre para el comprobante (opcional)", "") || "" : "")).trim();
+    const name = (providedName ?? customerName ?? "").trim();
     const reference = (() => {
       const d = new Date();
       const pad = (n: number) => String(n).padStart(2, "0");
@@ -237,7 +239,7 @@ export default function CartModal() {
             </label>
 
             <label
-              onClick={handleSend}
+              onClick={() => setNameDialogOpen(true)}
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700 
                          text-white py-2 px-4 rounded-lg font-medium transition"
             >
@@ -246,6 +248,57 @@ export default function CartModal() {
           </div>
         </>
       )}
+
+      {/* Prompt estilizado para capturar nombre (opcional) */}
+      <Dialog.Root open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1105]" />
+          <Dialog.Content
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1110]
+                       w-[92vw] max-w-sm rounded-xl border border-zinc-200 dark:border-zinc-700
+                       bg-white dark:bg-zinc-900 p-5 shadow-2xl"
+          >
+            <Dialog.Title className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              Ingresa tu nombre (opcional)
+            </Dialog.Title>
+            <Dialog.Description className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              Aparecerá en el comprobante PDF y en el mensaje de WhatsApp.
+            </Dialog.Description>
+
+            <input
+              autoFocus
+              type="text"
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              placeholder="Ej. Juan Pérez"
+              className="mt-4 w-full rounded-lg border bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-emerald-600"
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <Dialog.Close
+                onClick={() => {
+                  setNameDialogOpen(false);
+                  handleSend("");
+                }}
+                className="px-3 h-9 rounded-md text-sm font-medium bg-zinc-200 hover:bg-zinc-300 text-zinc-800 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
+              >
+                Omitir
+              </Dialog.Close>
+              <Dialog.Close
+                onClick={() => {
+                  const n = tempName.trim();
+                  setNameDialogOpen(false);
+                  handleSend(n);
+                  setTempName("");
+                }}
+                className="px-4 h-9 rounded-md text-sm font-semibold bg-green-600 hover:bg-green-700 text-white"
+              >
+                Continuar
+              </Dialog.Close>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }
