@@ -431,13 +431,25 @@ export async function exportOrderReceiptPdf(
 
   const total = items.reduce((acc, it) => acc + it.precio * it.cantidad, 0);
 
-  // Encabezado
+  // Encabezado con logo
   doc.setFillColor(247, 181, 0);
   doc.rect(0, 0, pageW, 22, "F");
+  try {
+    const logoData = await toDataURLOptimized(logoLight, { maxDim: 160, preferPng: true });
+    if (logoData) {
+      try {
+        doc.addImage(logoData, "PNG", margin, 4, 40, 12, undefined, "FAST");
+      } catch (err) {
+        devDebug("addImage logo receipt failed", err);
+      }
+    }
+  } catch (e) {
+    devDebug("toDataURLOptimized logo receipt failed", e);
+  }
   doc.setFont("helvetica", "bold");
   doc.setTextColor(20);
-  doc.setFontSize(14);
-  doc.text("WeldZone — Comprobante de Pedido", margin, 12);
+  doc.setFontSize(12);
+  doc.text("Comprobante de Pedido", margin + 46, 12);
   doc.setFontSize(10);
   doc.text(`Folio: ${reference}`, pageW - margin - doc.getTextWidth(`Folio: ${reference}`), 8);
   const dateStr = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(date);
